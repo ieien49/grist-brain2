@@ -8,450 +8,192 @@
 <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
 <style>
   :root {
-    --bg: #ffffff;
-    --bg2: #f9f9f8;
-    --bg3: #f1f1ef;
-    --border: #e8e8e5;
-    --border2: #d3d3ce;
-    --text: #191919;
-    --text2: #5a5a57;
-    --text3: #9b9b97;
-    --accent: #2d6adf;
-    --accent-light: #eff4ff;
-    --red: #eb5757;
-    --orange: #f1a349;
-    --yellow: #f5c341;
-    --green: #5da377;
-    --radius: 8px;
-    --radius-lg: 12px;
-    --shadow: 0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
-    --shadow-md: 0 4px 16px rgba(0,0,0,.08), 0 2px 6px rgba(0,0,0,.04);
-    --shadow-lg: 0 12px 40px rgba(0,0,0,.12), 0 4px 12px rgba(0,0,0,.06);
-    --transition: .18s cubic-bezier(.4,0,.2,1);
+    --bg:#fff;--bg2:#f9f9f8;--bg3:#f1f1ef;
+    --border:#e8e8e5;--border2:#d3d3ce;
+    --text:#191919;--text2:#5a5a57;--text3:#9b9b97;
+    --accent:#2d6adf;--accent-light:#eff4ff;
+    --red:#eb5757;--green:#5da377;
+    --radius:8px;--radius-lg:12px;
+    --shadow:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);
+    --shadow-md:0 4px 16px rgba(0,0,0,.08),0 2px 6px rgba(0,0,0,.04);
+    --shadow-lg:0 12px 40px rgba(0,0,0,.12),0 4px 12px rgba(0,0,0,.06);
+    --tr:.18s cubic-bezier(.4,0,.2,1);
   }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'DM Sans',sans-serif;font-size:14px;color:var(--text);background:var(--bg);height:100vh;display:flex;flex-direction:column;overflow:hidden}
 
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+  /* TOPBAR */
+  .topbar{display:flex;align-items:center;gap:8px;padding:12px 16px;border-bottom:1px solid var(--border);background:var(--bg);flex-shrink:0}
+  .logo{font-family:'DM Serif Display',serif;font-size:17px;letter-spacing:-.3px;margin-right:4px}
+  .sep{width:1px;height:18px;background:var(--border2);margin:0 4px}
+  .tab-btn{display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:6px;border:none;background:transparent;cursor:pointer;font-family:inherit;font-size:13.5px;color:var(--text2);font-weight:500;transition:background var(--tr),color var(--tr)}
+  .tab-btn:hover,.tab-btn.active{background:var(--bg3);color:var(--text)}
+  .spacer{flex:1}
+  .btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:var(--radius);border:none;cursor:pointer;font-family:inherit;font-size:13.5px;font-weight:500;transition:all var(--tr)}
+  .btn-primary{background:var(--text);color:#fff}.btn-primary:hover{background:#333}
+  .btn-ghost{background:transparent;color:var(--text2);border:1px solid var(--border2)}.btn-ghost:hover{background:var(--bg3);color:var(--text)}
+  .btn-sm{padding:5px 10px;font-size:12.5px}
 
-  body {
-    font-family: 'DM Sans', sans-serif;
-    font-size: 14px;
-    color: var(--text);
-    background: var(--bg);
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-  }
+  /* LAYOUT */
+  .layout{display:flex;flex:1;overflow:hidden}
 
-  /* ── TOPBAR ── */
-  .topbar {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 12px 16px;
-    border-bottom: 1px solid var(--border);
-    background: var(--bg);
-    flex-shrink: 0;
-  }
-  .topbar-logo {
-    font-family: 'DM Serif Display', serif;
-    font-size: 17px;
-    color: var(--text);
-    letter-spacing: -.3px;
-    margin-right: 4px;
-  }
-  .topbar-sep { width: 1px; height: 18px; background: var(--border2); margin: 0 4px; }
-  .tab-btn {
-    display: flex; align-items: center; gap: 6px;
-    padding: 6px 12px; border-radius: 6px; border: none; background: transparent;
-    cursor: pointer; font-family: inherit; font-size: 13.5px; color: var(--text2);
-    font-weight: 500; transition: background var(--transition), color var(--transition);
-  }
-  .tab-btn:hover { background: var(--bg3); color: var(--text); }
-  .tab-btn.active { background: var(--bg3); color: var(--text); }
-  .tab-btn svg { opacity: .7; }
-  .spacer { flex: 1; }
-  .btn {
-    display: inline-flex; align-items: center; gap: 6px;
-    padding: 7px 14px; border-radius: var(--radius); border: none;
-    cursor: pointer; font-family: inherit; font-size: 13.5px; font-weight: 500;
-    transition: all var(--transition);
-  }
-  .btn-primary { background: var(--text); color: #fff; }
-  .btn-primary:hover { background: #333; }
-  .btn-ghost { background: transparent; color: var(--text2); border: 1px solid var(--border2); }
-  .btn-ghost:hover { background: var(--bg3); color: var(--text); }
-  .btn-sm { padding: 5px 10px; font-size: 12.5px; }
+  /* SIDEBAR */
+  .sidebar{width:220px;flex-shrink:0;border-right:1px solid var(--border);padding:12px 8px;overflow-y:auto;background:var(--bg2);display:flex;flex-direction:column;gap:4px}
+  .sb-title{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;padding:8px 8px 4px}
+  .sb-item{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;cursor:pointer;color:var(--text2);font-size:13.5px;transition:background var(--tr),color var(--tr);user-select:none}
+  .sb-item:hover,.sb-item.active{background:var(--border);color:var(--text)}
+  .sb-item.active{font-weight:500}
+  .sb-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+  .sb-count{margin-left:auto;font-size:11px;color:var(--text3);background:var(--border);padding:1px 6px;border-radius:20px}
+  .sb-div{height:1px;background:var(--border);margin:6px 8px}
 
-  /* ── LAYOUT ── */
-  .layout {
-    display: flex;
-    flex: 1;
-    overflow: hidden;
-  }
+  /* MAIN */
+  .main{flex:1;overflow:hidden;display:flex;flex-direction:column}
 
-  /* ── SIDEBAR ── */
-  .sidebar {
-    width: 220px;
-    flex-shrink: 0;
-    border-right: 1px solid var(--border);
-    padding: 12px 8px;
-    overflow-y: auto;
-    background: var(--bg2);
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-  }
-  .sidebar-section-title {
-    font-size: 11px; font-weight: 600; color: var(--text3);
-    text-transform: uppercase; letter-spacing: .06em;
-    padding: 8px 8px 4px;
-  }
-  .sidebar-item {
-    display: flex; align-items: center; gap: 8px;
-    padding: 6px 8px; border-radius: 6px;
-    cursor: pointer; color: var(--text2); font-size: 13.5px;
-    transition: background var(--transition), color var(--transition);
-    user-select: none;
-  }
-  .sidebar-item:hover { background: var(--border); color: var(--text); }
-  .sidebar-item.active { background: var(--border); color: var(--text); font-weight: 500; }
-  .sidebar-dot {
-    width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
-  }
-  .sidebar-count {
-    margin-left: auto; font-size: 11px; color: var(--text3);
-    background: var(--border); padding: 1px 6px; border-radius: 20px;
-  }
-  .sidebar-divider { height: 1px; background: var(--border); margin: 6px 8px; }
+  /* TOOLBAR */
+  .toolbar{display:flex;align-items:center;gap:8px;padding:10px 16px;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--bg);flex-wrap:wrap}
+  .tb-title{font-size:15px;font-weight:600}
+  .chips{display:flex;gap:4px}
+  .chip{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:20px;border:1px solid var(--border2);background:var(--bg);color:var(--text2);font-size:12.5px;font-weight:500;cursor:pointer;transition:all var(--tr)}
+  .chip:hover{border-color:var(--text3);color:var(--text)}
+  .chip.active{background:var(--text);color:#fff;border-color:var(--text)}
+  .srch{position:relative}
+  .srch input{padding:6px 10px 6px 32px;border-radius:6px;border:1px solid var(--border2);font-family:inherit;font-size:13px;color:var(--text);background:var(--bg2);width:200px;outline:none;transition:all var(--tr)}
+  .srch input:focus{border-color:var(--accent);background:var(--bg);width:240px}
+  .srch svg{position:absolute;left:8px;top:50%;transform:translateY(-50%);color:var(--text3);pointer-events:none}
+  .vtoggle{display:flex;gap:2px;background:var(--bg3);border-radius:7px;padding:3px}
+  .vtbtn{display:flex;align-items:center;justify-content:center;width:28px;height:24px;border-radius:5px;border:none;background:transparent;cursor:pointer;color:var(--text3);transition:all var(--tr)}
+  .vtbtn.active{background:var(--bg);color:var(--text);box-shadow:var(--shadow)}
 
-  /* ── MAIN ── */
-  .main {
-    flex: 1;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-  }
+  /* CONTENT */
+  .content{flex:1;overflow-y:auto;padding:16px}
 
-  /* ── TOOLBAR ── */
-  .toolbar {
-    display: flex; align-items: center; gap: 8px;
-    padding: 10px 16px; border-bottom: 1px solid var(--border);
-    flex-shrink: 0; background: var(--bg);
-  }
-  .toolbar-title { font-size: 15px; font-weight: 600; color: var(--text); }
-  .filter-group { display: flex; gap: 4px; margin-left: 8px; }
-  .filter-chip {
-    display: inline-flex; align-items: center; gap: 4px;
-    padding: 4px 10px; border-radius: 20px; border: 1px solid var(--border2);
-    background: var(--bg); color: var(--text2); font-size: 12.5px; font-weight: 500;
-    cursor: pointer; transition: all var(--transition);
-  }
-  .filter-chip:hover { border-color: var(--text3); color: var(--text); }
-  .filter-chip.active { background: var(--text); color: #fff; border-color: var(--text); }
-  .search-wrap { position: relative; margin-left: auto; }
-  .search-wrap input {
-    padding: 6px 10px 6px 32px; border-radius: 6px; border: 1px solid var(--border2);
-    font-family: inherit; font-size: 13px; color: var(--text); background: var(--bg2);
-    width: 200px; outline: none; transition: all var(--transition);
-  }
-  .search-wrap input:focus { border-color: var(--accent); background: var(--bg); width: 240px; }
-  .search-wrap svg { position: absolute; left: 8px; top: 50%; transform: translateY(-50%); color: var(--text3); pointer-events: none; }
+  /* TASKS */
+  .tg{margin-bottom:24px}
+  .tg-hd{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+  .ti{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--radius);border:1px solid transparent;transition:all var(--tr);cursor:pointer;margin-bottom:2px}
+  .ti:hover{background:var(--bg2);border-color:var(--border)}
+  .ti.done{opacity:.5}
+  .chk{width:16px;height:16px;border-radius:4px;border:1.5px solid var(--border2);flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all var(--tr);background:var(--bg)}
+  .chk:hover{border-color:var(--accent)}
+  .chk.checked{background:var(--green);border-color:var(--green)}
+  .chk.checked svg{display:block}.chk svg{display:none;color:#fff}
+  .tname{flex:1;font-size:14px;color:var(--text)}
+  .ti.done .tname{text-decoration:line-through;color:var(--text3)}
+  .tmeta{display:flex;align-items:center;gap:8px}
+  .pbadge{font-size:11px;font-weight:600;padding:2px 7px;border-radius:4px;letter-spacing:.03em}
+  .pc{background:#fde8e8;color:#c53030}.ph{background:#fef3e2;color:#c05621}.pm{background:#fefce8;color:#92400e}.pb{background:#f0fdf4;color:#276749}
+  .tdate{font-size:12px;color:var(--text3)}.tdate.od{color:var(--red);font-weight:500}
+  .tacts{display:flex;gap:4px;opacity:0;transition:opacity var(--tr)}.ti:hover .tacts{opacity:1}
+  .ibtn{width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:5px;border:none;background:transparent;cursor:pointer;color:var(--text3);transition:all var(--tr)}
+  .ibtn:hover{background:var(--border);color:var(--text)}
+  .tadd{display:flex;align-items:center;gap:6px;padding:7px 12px;border-radius:var(--radius);color:var(--text3);font-size:13px;cursor:pointer;margin-top:4px;transition:all var(--tr);width:fit-content}
+  .tadd:hover{background:var(--bg2);color:var(--text2)}
 
-  /* ── CONTENT ── */
-  .content {
-    flex: 1; overflow-y: auto; padding: 16px;
-  }
+  /* KNOWLEDGE GRID */
+  .kgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+  .kcard{border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px 16px;background:var(--bg);cursor:pointer;transition:all var(--tr);display:flex;flex-direction:column;gap:8px}
+  .kcard:hover{border-color:var(--border2);box-shadow:var(--shadow-md);transform:translateY(-1px)}
+  .ch{display:flex;align-items:flex-start;gap:10px}
+  .ci{width:34px;height:34px;border-radius:8px;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+  .ci-web{background:#eff6ff;color:#2563eb}.ci-fichier{background:#f0fdf4;color:#16a34a}.ci-note{background:#fefce8;color:#ca8a04}
+  .ctitle{font-size:14px;font-weight:600;color:var(--text);line-height:1.4;flex:1}
+  .cdesc{font-size:13px;color:var(--text2);line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .cfoot{display:flex;align-items:center;gap:6px;margin-top:4px;flex-wrap:wrap}
+  .ftag{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:500;padding:2px 8px;border-radius:4px;background:var(--bg3);color:var(--text2)}
+  .fdot{width:6px;height:6px;border-radius:50%}
+  .tbadge{font-size:11px;font-weight:600;padding:2px 6px;border-radius:4px;text-transform:uppercase;letter-spacing:.04em}
+  .tw{background:#eff6ff;color:#2563eb}.tf{background:#f0fdf4;color:#16a34a}.tn{background:#fefce8;color:#ca8a04}
+  /* attachment chip */
+  .achip{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:500;padding:2px 7px;border-radius:4px;background:#f3f0ff;color:#6d28d9;cursor:pointer;border:none;font-family:inherit;transition:background var(--tr)}
+  .achip:hover{background:#ede9fe}
 
-  /* ── TASK VIEW ── */
-  .task-group { margin-bottom: 24px; }
-  .task-group-header {
-    display: flex; align-items: center; gap: 8px;
-    font-size: 12px; font-weight: 600; color: var(--text3);
-    text-transform: uppercase; letter-spacing: .06em;
-    margin-bottom: 8px; padding-bottom: 8px;
-    border-bottom: 1px solid var(--border);
-  }
-  .task-item {
-    display: flex; align-items: center; gap: 10px;
-    padding: 10px 12px; border-radius: var(--radius);
-    border: 1px solid transparent;
-    transition: all var(--transition); cursor: pointer;
-    margin-bottom: 2px;
-  }
-  .task-item:hover { background: var(--bg2); border-color: var(--border); }
-  .task-item.done { opacity: .5; }
-  .task-checkbox {
-    width: 16px; height: 16px; border-radius: 4px; border: 1.5px solid var(--border2);
-    flex-shrink: 0; cursor: pointer; display: flex; align-items: center; justify-content: center;
-    transition: all var(--transition); background: var(--bg);
-  }
-  .task-checkbox:hover { border-color: var(--accent); }
-  .task-checkbox.checked { background: var(--green); border-color: var(--green); }
-  .task-checkbox.checked svg { display: block; }
-  .task-checkbox svg { display: none; color: white; }
-  .task-name { flex: 1; font-size: 14px; color: var(--text); }
-  .task-item.done .task-name { text-decoration: line-through; color: var(--text3); }
-  .task-meta { display: flex; align-items: center; gap: 8px; }
-  .priority-badge {
-    font-size: 11px; font-weight: 600; padding: 2px 7px; border-radius: 4px;
-    letter-spacing: .03em;
-  }
-  .priority-critique { background: #fde8e8; color: #c53030; }
-  .priority-haute { background: #fef3e2; color: #c05621; }
-  .priority-moyenne { background: #fefce8; color: #92400e; }
-  .priority-basse { background: #f0fdf4; color: #276749; }
-  .task-date { font-size: 12px; color: var(--text3); }
-  .task-date.overdue { color: var(--red); font-weight: 500; }
-  .task-actions { display: flex; gap: 4px; opacity: 0; transition: opacity var(--transition); }
-  .task-item:hover .task-actions { opacity: 1; }
-  .icon-btn {
-    width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;
-    border-radius: 5px; border: none; background: transparent; cursor: pointer; color: var(--text3);
-    transition: all var(--transition);
-  }
-  .icon-btn:hover { background: var(--border); color: var(--text); }
+  /* KNOWLEDGE TABLE */
+  .ktable{width:100%;border-collapse:collapse}
+  .ktable thead th{text-align:left;font-size:11.5px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;padding:6px 10px;border-bottom:1.5px solid var(--border);background:var(--bg);position:sticky;top:0;z-index:1;white-space:nowrap}
+  .ktable thead th:first-child{padding-left:4px}
+  .ktable tbody tr{border-bottom:1px solid var(--border);cursor:pointer;transition:background var(--tr)}
+  .ktable tbody tr:hover{background:var(--bg2)}
+  .ktable tbody tr:last-child{border-bottom:none}
+  .ktable td{padding:8px 10px;vertical-align:middle;font-size:13.5px}
+  .ktable td:first-child{padding-left:4px}
+  .ki-cell{width:32px;padding-right:0!important}
+  .ki{width:26px;height:26px;border-radius:6px;display:flex;align-items:center;justify-content:center}
+  .kname{font-weight:500;color:var(--text)}
+  .ksub{font-size:12px;color:var(--text3);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:280px}
+  .kfolder{white-space:nowrap}
+  .klink{color:var(--accent);font-size:12px;max-width:150px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;text-decoration:none}
+  .klink:hover{text-decoration:underline}
+  .kacts{display:flex;gap:2px;opacity:0;transition:opacity var(--tr)}.ktable tbody tr:hover .kacts{opacity:1}
+  .lgh{display:flex;align-items:center;gap:8px;font-size:11.5px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;padding:10px 4px 6px;border-bottom:1.5px solid var(--border);margin-top:20px}
+  .lgh:first-child{margin-top:0}
+  .glabel{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--text2);padding:12px 0 8px;margin-top:8px}
+  .glabel:first-child{margin-top:0}
 
-  /* ── KNOWLEDGE GRID (cards fallback) ── */
-  .knowledge-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-    gap: 12px;
-  }
-  .knowledge-card {
-    border: 1px solid var(--border); border-radius: var(--radius-lg);
-    padding: 14px 16px; background: var(--bg);
-    cursor: pointer; transition: all var(--transition);
-    display: flex; flex-direction: column; gap: 8px;
-  }
-  .knowledge-card:hover {
-    border-color: var(--border2); box-shadow: var(--shadow-md);
-    transform: translateY(-1px);
-  }
-  .card-header { display: flex; align-items: flex-start; gap: 10px; }
-  .card-icon {
-    width: 34px; height: 34px; border-radius: 8px; flex-shrink: 0;
-    display: flex; align-items: center; justify-content: center;
-  }
-  .card-icon-web { background: #eff6ff; color: #2563eb; }
-  .card-icon-fichier { background: #f0fdf4; color: #16a34a; }
-  .card-icon-note { background: #fefce8; color: #ca8a04; }
-  .card-title { font-size: 14px; font-weight: 600; color: var(--text); line-height: 1.4; flex: 1; }
-  .card-desc {
-    font-size: 13px; color: var(--text2); line-height: 1.5;
-    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
-  }
-  .card-footer { display: flex; align-items: center; gap: 6px; margin-top: 4px; }
-  .folder-tag {
-    display: inline-flex; align-items: center; gap: 5px;
-    font-size: 11.5px; font-weight: 500; padding: 2px 8px; border-radius: 4px;
-    background: var(--bg3); color: var(--text2);
-  }
-  .folder-dot { width: 6px; height: 6px; border-radius: 50%; }
-  .card-type-badge {
-    font-size: 11px; font-weight: 600; padding: 2px 6px; border-radius: 4px;
-    margin-left: auto; text-transform: uppercase; letter-spacing: .04em;
-  }
-  .badge-web { background: #eff6ff; color: #2563eb; }
-  .badge-fichier { background: #f0fdf4; color: #16a34a; }
-  .badge-note { background: #fefce8; color: #ca8a04; }
+  /* MODAL */
+  .overlay{position:fixed;inset:0;background:rgba(0,0,0,.25);display:flex;align-items:center;justify-content:center;z-index:1000;opacity:0;pointer-events:none;transition:opacity var(--tr);backdrop-filter:blur(2px)}
+  .overlay.open{opacity:1;pointer-events:all}
+  .modal{background:var(--bg);border-radius:var(--radius-lg);box-shadow:var(--shadow-lg);width:520px;max-width:calc(100vw - 32px);max-height:calc(100vh - 64px);overflow-y:auto;transform:translateY(12px) scale(.98);transition:transform var(--tr)}
+  .overlay.open .modal{transform:translateY(0) scale(1)}
+  .mhd{display:flex;align-items:center;padding:18px 20px 14px;border-bottom:1px solid var(--border);gap:10px}
+  .mtitle{font-size:16px;font-weight:600;flex:1}
+  .mbody{padding:16px 20px;display:flex;flex-direction:column;gap:14px}
+  .mfoot{display:flex;justify-content:flex-end;gap:8px;padding:14px 20px;border-top:1px solid var(--border)}
+  .ff{display:flex;flex-direction:column;gap:5px}
+  .fl{font-size:12.5px;font-weight:600;color:var(--text2)}
+  .fi,.fs,.fta{padding:8px 10px;border-radius:var(--radius);border:1.5px solid var(--border2);font-family:inherit;font-size:14px;color:var(--text);background:var(--bg);outline:none;transition:border-color var(--tr)}
+  .fi:focus,.fs:focus,.fta:focus{border-color:var(--accent)}
+  .fta{resize:vertical;min-height:80px;line-height:1.5}
+  .tysel{display:flex;gap:6px}
+  .tybtn{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;padding:10px 8px;border-radius:var(--radius);border:1.5px solid var(--border2);cursor:pointer;background:var(--bg);transition:all var(--tr);font-family:inherit;font-size:12px;font-weight:500;color:var(--text2)}
+  .tybtn:hover{background:var(--bg2)}
+  .tybtn.active{border-color:var(--accent);background:var(--accent-light);color:var(--accent)}
 
-  /* ── VIEW TOGGLE ── */
-  .view-toggle {
-    display: flex; gap: 2px;
-    background: var(--bg3); border-radius: 7px; padding: 3px;
-  }
-  .view-toggle-btn {
-    display: flex; align-items: center; justify-content: center;
-    width: 28px; height: 24px; border-radius: 5px; border: none; background: transparent;
-    cursor: pointer; color: var(--text3); transition: all var(--transition);
-  }
-  .view-toggle-btn.active { background: var(--bg); color: var(--text); box-shadow: var(--shadow); }
-  .view-toggle-btn:hover:not(.active) { color: var(--text2); }
+  /* UPLOAD ZONE */
+  .upzone{border:2px dashed var(--border2);border-radius:var(--radius);padding:20px 16px;text-align:center;color:var(--text3);font-size:13px;transition:all var(--tr);cursor:pointer;position:relative}
+  .upzone:hover,.upzone.drag-over{border-color:var(--accent);background:var(--accent-light);color:var(--accent)}
+  .upzone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
 
-  /* ── KNOWLEDGE LIST (table-style) ── */
-  .knowledge-table {
-    width: 100%; border-collapse: collapse;
-  }
-  .knowledge-table thead th {
-    text-align: left; font-size: 11.5px; font-weight: 600; color: var(--text3);
-    text-transform: uppercase; letter-spacing: .06em;
-    padding: 6px 10px; border-bottom: 1.5px solid var(--border);
-    background: var(--bg); position: sticky; top: 0; z-index: 1;
-    white-space: nowrap;
-  }
-  .knowledge-table thead th:first-child { padding-left: 4px; }
-  .knowledge-table tbody tr {
-    border-bottom: 1px solid var(--border);
-    cursor: pointer; transition: background var(--transition);
-  }
-  .knowledge-table tbody tr:hover { background: var(--bg2); }
-  .knowledge-table tbody tr:last-child { border-bottom: none; }
-  .knowledge-table td {
-    padding: 8px 10px; vertical-align: middle; font-size: 13.5px;
-  }
-  .knowledge-table td:first-child { padding-left: 4px; }
-  .kt-icon-cell {
-    width: 32px; padding-right: 0 !important;
-  }
-  .kt-icon {
-    width: 26px; height: 26px; border-radius: 6px; flex-shrink: 0;
-    display: flex; align-items: center; justify-content: center;
-  }
-  .kt-name { font-weight: 500; color: var(--text); max-width: 300px; }
-  .kt-name-sub { font-size: 12px; color: var(--text3); margin-top: 1px;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 320px; }
-  .kt-folder { white-space: nowrap; }
-  .kt-actions {
-    display: flex; gap: 2px; opacity: 0; transition: opacity var(--transition);
-  }
-  .knowledge-table tbody tr:hover .kt-actions { opacity: 1; }
-  .kt-link { color: var(--accent); font-size: 12px; max-width: 180px;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
+  /* ATTACH LIST (modal + detail) */
+  .alist{display:flex;flex-direction:column;gap:6px}
+  .arow{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:var(--radius);border:1px solid var(--border);background:var(--bg2)}
+  .aicon{width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .aname{flex:1;font-size:13px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .asize{font-size:11.5px;color:var(--text3);white-space:nowrap}
+  .aacts{display:flex;gap:4px;flex-shrink:0}
 
-  /* ── GROUP SECTION (list mode) ── */
-  .list-group-header {
-    display: flex; align-items: center; gap: 8px;
-    font-size: 11.5px; font-weight: 600; color: var(--text3);
-    text-transform: uppercase; letter-spacing: .06em;
-    padding: 10px 4px 6px; border-bottom: 1.5px solid var(--border);
-    margin-top: 20px;
-  }
-  .list-group-header:first-child { margin-top: 0; }
+  /* PREVIEW */
+  .prev-ov{position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:2000;display:flex;flex-direction:column;opacity:0;pointer-events:none;transition:opacity var(--tr)}
+  .prev-ov.open{opacity:1;pointer-events:all}
+  .prev-bar{display:flex;align-items:center;gap:12px;padding:12px 16px;background:rgba(0,0,0,.3);backdrop-filter:blur(8px);flex-shrink:0}
+  .prev-name{font-size:14px;font-weight:500;color:#fff;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .prev-dl{display:inline-flex;align-items:center;gap:5px;color:rgba(255,255,255,.75);font-size:12.5px;text-decoration:none;padding:5px 10px;border-radius:5px;border:1px solid rgba(255,255,255,.2);transition:background .15s}
+  .prev-dl:hover{background:rgba(255,255,255,.1);color:#fff}
+  .prev-close{width:32px;height:32px;border-radius:6px;border:none;background:rgba(255,255,255,.15);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background var(--tr)}
+  .prev-close:hover{background:rgba(255,255,255,.25)}
+  .prev-body{flex:1;display:flex;align-items:center;justify-content:center;overflow:hidden;padding:16px}
+  .prev-body iframe{width:100%;height:100%;border:none;border-radius:var(--radius);background:#fff}
+  .prev-body img{max-width:100%;max-height:100%;object-fit:contain;border-radius:var(--radius);box-shadow:0 4px 32px rgba(0,0,0,.4)}
+  .prev-unsup{color:rgba(255,255,255,.6);text-align:center;font-size:14px}
+  .prev-unsup svg{display:block;margin:0 auto 12px;opacity:.4}
 
-  /* ── MODAL ── */
-  .overlay {
-    position: fixed; inset: 0; background: rgba(0,0,0,.25);
-    display: flex; align-items: center; justify-content: center;
-    z-index: 1000; opacity: 0; pointer-events: none;
-    transition: opacity var(--transition);
-    backdrop-filter: blur(2px);
-  }
-  .overlay.open { opacity: 1; pointer-events: all; }
-  .modal {
-    background: var(--bg); border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-lg);
-    width: 520px; max-width: calc(100vw - 32px); max-height: calc(100vh - 64px);
-    overflow-y: auto;
-    transform: translateY(12px) scale(.98);
-    transition: transform var(--transition);
-  }
-  .overlay.open .modal { transform: translateY(0) scale(1); }
-  .modal-header {
-    display: flex; align-items: center; padding: 18px 20px 14px;
-    border-bottom: 1px solid var(--border); gap: 10px;
-  }
-  .modal-title { font-size: 16px; font-weight: 600; flex: 1; }
-  .modal-body { padding: 16px 20px; display: flex; flex-direction: column; gap: 14px; }
-  .modal-footer {
-    display: flex; justify-content: flex-end; gap: 8px;
-    padding: 14px 20px; border-top: 1px solid var(--border);
-  }
-  .form-field { display: flex; flex-direction: column; gap: 5px; }
-  .form-label { font-size: 12.5px; font-weight: 600; color: var(--text2); }
-  .form-input, .form-select, .form-textarea {
-    padding: 8px 10px; border-radius: var(--radius); border: 1.5px solid var(--border2);
-    font-family: inherit; font-size: 14px; color: var(--text); background: var(--bg);
-    outline: none; transition: border-color var(--transition);
-  }
-  .form-input:focus, .form-select:focus, .form-textarea:focus {
-    border-color: var(--accent);
-  }
-  .form-textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
-  .type-selector { display: flex; gap: 6px; }
-  .type-btn {
-    flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px;
-    padding: 10px 8px; border-radius: var(--radius); border: 1.5px solid var(--border2);
-    cursor: pointer; background: var(--bg); transition: all var(--transition);
-    font-family: inherit; font-size: 12px; font-weight: 500; color: var(--text2);
-  }
-  .type-btn:hover { border-color: var(--border2); background: var(--bg2); }
-  .type-btn.active { border-color: var(--accent); background: var(--accent-light); color: var(--accent); }
-  .type-btn svg { opacity: .8; }
+  /* DETAIL */
+  .dlink{color:var(--accent);text-decoration:none}.dlink:hover{text-decoration:underline}
+  .ddesc{font-size:14px;color:var(--text2);line-height:1.6;background:var(--bg2);padding:10px 12px;border-radius:var(--radius)}
 
-  /* ── EMPTY STATE ── */
-  .empty-state {
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    gap: 12px; padding: 60px 20px; color: var(--text3);
-    text-align: center;
-  }
-  .empty-state svg { opacity: .4; }
-  .empty-title { font-size: 15px; font-weight: 500; color: var(--text2); }
-  .empty-sub { font-size: 13px; }
-
-  /* ── DETAIL MODAL ── */
-  .detail-link { color: var(--accent); text-decoration: none; }
-  .detail-link:hover { text-decoration: underline; }
-  .detail-desc {
-    font-size: 14px; color: var(--text2); line-height: 1.6;
-    background: var(--bg2); padding: 10px 12px; border-radius: var(--radius);
-  }
-
-  /* ── SCROLLBAR ── */
-  ::-webkit-scrollbar { width: 6px; height: 6px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
-
-  .loading {
-    display: flex; align-items: center; justify-content: center;
-    height: 100%; color: var(--text3); gap: 8px; font-size: 14px;
-  }
-
-  .group-label {
-    display: flex; align-items: center; gap: 8px;
-    font-size: 13px; font-weight: 600; color: var(--text2);
-    padding: 12px 0 8px; margin-top: 8px;
-  }
-  .group-label:first-child { margin-top: 0; }
-  .group-label-dot { width: 8px; height: 8px; border-radius: 50%; }
-
-  .task-section-add {
-    display: flex; align-items: center; gap: 6px;
-    padding: 7px 12px; border-radius: var(--radius);
-    color: var(--text3); font-size: 13px;
-    cursor: pointer; margin-top: 4px;
-    transition: all var(--transition); width: fit-content;
-  }
-  .task-section-add:hover { background: var(--bg2); color: var(--text2); }
-
-  .inline-form {
-    display: flex; align-items: center; gap: 8px;
-    padding: 8px 12px; border-radius: var(--radius);
-    border: 1.5px solid var(--accent); background: var(--accent-light);
-    margin-top: 4px;
-  }
-  .inline-form input {
-    flex: 1; border: none; background: transparent; font-family: inherit;
-    font-size: 14px; color: var(--text); outline: none;
-  }
-  .inline-form select {
-    border: 1px solid var(--border2); border-radius: 5px; background: var(--bg);
-    font-family: inherit; font-size: 12.5px; color: var(--text2); padding: 3px 6px;
-    outline: none;
-  }
-  .inline-form input[type="date"] {
-    border: 1px solid var(--border2); border-radius: 5px; background: var(--bg);
-    font-family: inherit; font-size: 12.5px; color: var(--text2); padding: 3px 6px;
-  }
-
-  .tooltip {
-    position: relative;
-  }
-  .tooltip::after {
-    content: attr(data-tip);
-    position: absolute; bottom: calc(100% + 4px); left: 50%; transform: translateX(-50%);
-    background: #333; color: #fff; font-size: 11px; padding: 3px 7px; border-radius: 4px;
-    white-space: nowrap; pointer-events: none; opacity: 0; transition: opacity .15s;
-  }
-  .tooltip:hover::after { opacity: 1; }
+  /* MISC */
+  .empty{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:60px 20px;color:var(--text3);text-align:center}
+  .etitle{font-size:15px;font-weight:500;color:var(--text2)}.esub{font-size:13px}
+  .loading{display:flex;align-items:center;justify-content:center;height:100%;color:var(--text3);gap:8px;font-size:14px}
+  ::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+  @keyframes spin{to{transform:rotate(360deg)}}
 </style>
 </head>
 <body>
 
-<!-- TOPBAR -->
 <div class="topbar">
-  <span class="topbar-logo">Second Brain</span>
-  <div class="topbar-sep"></div>
+  <span class="logo">Second Brain</span>
+  <div class="sep"></div>
   <button class="tab-btn active" id="tab-knowledge" onclick="switchTab('knowledge')">
     <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
     Connaissances
@@ -467,18 +209,10 @@
   </button>
 </div>
 
-<!-- LAYOUT -->
 <div class="layout">
-  <!-- SIDEBAR -->
-  <div class="sidebar" id="sidebar">
-    <!-- filled by JS -->
-  </div>
-
-  <!-- MAIN -->
+  <div class="sidebar" id="sidebar"></div>
   <div class="main">
-    <div class="toolbar" id="toolbar">
-      <!-- filled by JS -->
-    </div>
+    <div class="toolbar" id="toolbar"></div>
     <div class="content" id="content">
       <div class="loading">
         <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="animation:spin 1s linear infinite"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
@@ -489,814 +223,695 @@
 </div>
 
 <!-- ADD/EDIT MODAL -->
-<div class="overlay" id="addOverlay">
+<div class="overlay" id="addOv">
   <div class="modal">
-    <div class="modal-header">
-      <span class="modal-title" id="modalTitle">Ajouter</span>
-      <button class="icon-btn" onclick="closeAddModal()">
-        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-      </button>
+    <div class="mhd">
+      <span class="mtitle" id="modalTitle">Ajouter</span>
+      <button class="ibtn" onclick="closeAddModal()"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
     </div>
-    <div class="modal-body" id="modalBody"></div>
-    <div class="modal-footer">
+    <div class="mbody" id="modalBody"></div>
+    <div class="mfoot">
       <button class="btn btn-ghost" onclick="closeAddModal()">Annuler</button>
-      <button class="btn btn-primary" id="modalSaveBtn" onclick="saveModal()">Enregistrer</button>
+      <button class="btn btn-primary" id="saveBtn" onclick="saveModal()">Enregistrer</button>
     </div>
   </div>
 </div>
 
 <!-- DETAIL MODAL -->
-<div class="overlay" id="detailOverlay">
-  <div class="modal">
-    <div class="modal-header">
-      <span class="modal-title" id="detailTitle"></span>
+<div class="overlay" id="detOv">
+  <div class="modal" style="width:580px">
+    <div class="mhd">
+      <span class="mtitle" id="detTitle"></span>
       <div style="display:flex;gap:6px;margin-left:auto">
-        <button class="btn btn-ghost btn-sm" id="detailEditBtn" onclick="editFromDetail()">
+        <button class="btn btn-ghost btn-sm" onclick="editFromDetail()">
           <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
           Modifier
         </button>
-        <button class="icon-btn" onclick="closeDetailModal()">
-          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-        </button>
+        <button class="ibtn" onclick="closeDetModal()"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
       </div>
     </div>
-    <div class="modal-body" id="detailBody"></div>
+    <div class="mbody" id="detBody"></div>
   </div>
 </div>
 
-<style>
-@keyframes spin { to { transform: rotate(360deg); } }
-</style>
+<!-- PREVIEW OVERLAY -->
+<div class="prev-ov" id="prevOv">
+  <div class="prev-bar">
+    <svg width="15" height="15" fill="none" stroke="rgba(255,255,255,.6)" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+    <span class="prev-name" id="prevName">—</span>
+    <a id="prevDl" href="#" target="_blank" class="prev-dl">
+      <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Télécharger
+    </a>
+    <button class="prev-close" onclick="closePrev()"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+  </div>
+  <div class="prev-body" id="prevBody"></div>
+</div>
 
 <script>
-// ══════════════════════════════════════════════
+// ═══════════════════════════════
 //  STATE
-// ══════════════════════════════════════════════
-let state = {
-  tab: 'knowledge',        // 'knowledge' | 'tasks'
-  items: [],
-  dossiers: [],
-  categories: [],
-  filterType: 'all',       // knowledge: 'all'|'web'|'fichier'|'note' / tasks: 'all'|'todo'|'done'
-  filterDossier: null,
-  filterPriority: null,
-  search: '',
-  groupBy: 'dossier',      // 'dossier' | 'type' | 'categorie' | 'none'
-  viewMode: 'list',        // 'list' | 'grid'
-  editingItem: null,
-  detailItem: null,
+// ═══════════════════════════════
+const S = {
+  tab:'knowledge', items:[], dossiers:[], categories:[],
+  filterType:'all', filterDossier:null, filterPriority:null,
+  search:'', groupBy:'dossier', viewMode:'list', detailItem:null
 };
 
-// ══════════════════════════════════════════════
-//  GRIST INIT
-// ══════════════════════════════════════════════
-grist.ready({ requiredAccess: 'full', columns: [] });
+let gristOrigin = window.location.origin;
+let gristDocId = null;
+const metaCache = {}; // attachId -> {fileName, fileSize}
 
-grist.onRecords((records, mappings) => {
-  // Detect which table by columns present
-  if (!records || !records.length) return;
-  const cols = Object.keys(records[0]);
-  if (cols.includes('echeance') || cols.includes('type') && cols.includes('dossier')) {
-    state.items = records;
-    render();
-  } else if (cols.includes('categorie')) {
-    state.dossiers = records;
-    render();
-  } else if (cols.includes('couleur')) {
-    state.categories = records;
-    render();
-  }
-});
+// ═══════════════════════════════
+//  GRIST BOOTSTRAP
+// ═══════════════════════════════
+grist.ready({ requiredAccess:'full', columns:[] });
 
-// Fetch all tables we need
-async function fetchAll() {
+async function boot() {
+  // Try to get docId from parent URL (referrer) or current URL
+  const tryDocId = (url) => { const m = url.match(/\/doc\/([^\/\?#]+)/); return m ? m[1] : null; };
+  gristDocId = tryDocId(document.referrer) || tryDocId(window.location.href);
+  // Also try query param
+  if (!gristDocId) { const p = new URLSearchParams(window.location.search); gristDocId = p.get('docId'); }
+
   try {
-    // We use grist.docApi to fetch multiple tables
-    const [items, dossiers, categories] = await Promise.all([
+    const [items, dossiers, cats] = await Promise.all([
       grist.docApi.fetchTable('Item'),
       grist.docApi.fetchTable('Dossier'),
       grist.docApi.fetchTable('Categorie'),
     ]);
-    state.items = tableToRecords(items);
-    state.dossiers = tableToRecords(dossiers);
-    state.categories = tableToRecords(categories);
+    S.items = toRecs(items); S.dossiers = toRecs(dossiers); S.categories = toRecs(cats);
     render();
   } catch(e) {
-    // fallback: widget is attached to a single table, use onRecords
-    console.log('Multi-table fetch not available, using onRecords', e);
+    console.error(e);
+    document.getElementById('content').innerHTML = `<div class="empty"><span class="etitle">Erreur de chargement</span><span class="esub">${e.message}</span></div>`;
   }
 }
 
-function tableToRecords(tableData) {
-  if (!tableData || !tableData.id) return [];
-  const ids = tableData.id;
-  const colNames = Object.keys(tableData).filter(k => k !== 'id');
-  return ids.map((id, i) => {
-    const rec = { id };
-    colNames.forEach(col => { rec[col] = tableData[col][i]; });
-    return rec;
-  });
+function toRecs(t) {
+  if (!t || !t.id) return [];
+  return t.id.map((id,i) => { const r={id}; Object.keys(t).filter(k=>k!=='id').forEach(k=>r[k]=t[k][i]); return r; });
 }
 
-fetchAll();
+// Parse Grist attachment column: ['L',1,2,...] or [] or null
+function parseAttachIds(v) {
+  if (!v) return [];
+  if (Array.isArray(v)) { if (v[0]==='L') return v.slice(1).map(Number).filter(Boolean); return v.map(Number).filter(Boolean); }
+  return [];
+}
 
-// ══════════════════════════════════════════════
-//  TAB SWITCH
-// ══════════════════════════════════════════════
-function switchTab(tab) {
-  state.tab = tab;
-  state.filterType = 'all';
-  state.filterDossier = null;
-  state.filterPriority = null;
-  state.search = '';
-  document.getElementById('tab-knowledge').classList.toggle('active', tab === 'knowledge');
-  document.getElementById('tab-tasks').classList.toggle('active', tab === 'tasks');
+boot();
+
+// ═══════════════════════════════
+//  ATTACHMENT API
+// ═══════════════════════════════
+function attachUrl(id) {
+  if (gristDocId) return `${gristOrigin}/api/docs/${gristDocId}/attachments/${id}/download`;
+  return `#a${id}`;
+}
+
+async function uploadFile(file, onProgress) {
+  if (!gristDocId) throw new Error('DocId introuvable. Vérifiez que le widget est chargé dans Grist.');
+  const fd = new FormData(); fd.append('upload', file);
+  const resp = await fetch(`${gristOrigin}/api/docs/${gristDocId}/attachments`, {
+    method:'POST', body:fd, credentials:'include'
+  });
+  if (!resp.ok) { const t=await resp.text().catch(()=>''); throw new Error(`HTTP ${resp.status}: ${t}`); }
+  return await resp.json(); // [id, ...]
+}
+
+async function fetchMeta(id) {
+  if (metaCache[id]) return metaCache[id];
+  if (!gristDocId) return { fileName:`fichier-${id}`, fileSize:0 };
+  try {
+    const r = await fetch(`${gristOrigin}/api/docs/${gristDocId}/attachments/${id}`, {credentials:'include'});
+    if (!r.ok) return { fileName:`fichier-${id}`, fileSize:0 };
+    const d = await r.json(); metaCache[id] = d; return d;
+  } catch { return { fileName:`fichier-${id}`, fileSize:0 }; }
+}
+
+// ═══════════════════════════════
+//  RENDER
+// ═══════════════════════════════
+function switchTab(t) {
+  S.tab=t; S.filterType='all'; S.filterDossier=null; S.filterPriority=null; S.search='';
+  document.getElementById('tab-knowledge').classList.toggle('active',t==='knowledge');
+  document.getElementById('tab-tasks').classList.toggle('active',t==='tasks');
   render();
 }
+function render() { rSidebar(); rToolbar(); rContent(); }
 
-// ══════════════════════════════════════════════
-//  RENDER ORCHESTRATOR
-// ══════════════════════════════════════════════
-function render() {
-  renderSidebar();
-  renderToolbar();
-  renderContent();
-}
-
-// ══════════════════════════════════════════════
-//  SIDEBAR
-// ══════════════════════════════════════════════
-function renderSidebar() {
-  const sb = document.getElementById('sidebar');
-
-  if (state.tab === 'tasks') {
+// ─── SIDEBAR ───
+function rSidebar() {
+  const sb=document.getElementById('sidebar');
+  if (S.tab==='tasks') {
     sb.innerHTML = `
-      <div class="sidebar-section-title">Filtres</div>
-      ${sidebarItem('all-tasks', null, 'Toutes les tâches', countTasks('all'))}
-      ${sidebarItem('todo', null, 'À faire', countTasks('todo'))}
-      ${sidebarItem('done', null, 'Terminées', countTasks('done'))}
-      <div class="sidebar-divider"></div>
-      <div class="sidebar-section-title">Priorité</div>
-      ${sidebarItem('p-critique', '#ef4444', 'Critique', countTasksByPriority('Critique'))}
-      ${sidebarItem('p-haute', '#f97316', 'Haute', countTasksByPriority('Haute'))}
-      ${sidebarItem('p-moyenne', '#eab308', 'Moyenne', countTasksByPriority('Moyenne'))}
-      ${sidebarItem('p-basse', '#22c55e', 'Basse', countTasksByPriority('Basse'))}
-    `;
+      <div class="sb-title">Filtres</div>
+      ${sbItem('all-tasks',null,'Toutes',cntTask('all'),'filterTaskAll()')}
+      ${sbItem('todo',null,'À faire',cntTask('todo'),"filterTaskStatus('todo')")}
+      ${sbItem('done',null,'Terminées',cntTask('done'),"filterTaskStatus('done')")}
+      <div class="sb-div"></div>
+      <div class="sb-title">Priorité</div>
+      ${sbItem('pc','#ef4444','Critique',cntTaskP('Critique'),"filterTaskP('Critique')")}
+      ${sbItem('ph','#f97316','Haute',cntTaskP('Haute'),"filterTaskP('Haute')")}
+      ${sbItem('pm','#eab308','Moyenne',cntTaskP('Moyenne'),"filterTaskP('Moyenne')")}
+      ${sbItem('pb','#22c55e','Basse',cntTaskP('Basse'),"filterTaskP('Basse')")}`;
     return;
   }
-
-  // Knowledge sidebar: Catégories + Dossiers
-  const cats = state.categories;
-  const inboxCats = cats.filter(c => c.type === 'Inbox');
-  const domainCats = cats.filter(c => c.type === 'Domaine');
-  const resourceCats = cats.filter(c => c.type === 'Ressource');
-
-  let html = `
-    <div class="sidebar-section-title">Vue</div>
-    ${sidebarItem('all', null, 'Tout', countKnowledge('all'))}
-    <div class="sidebar-divider"></div>
-  `;
-
-  const renderCatGroup = (cats, label) => {
-    if (!cats.length) return '';
-    let out = `<div class="sidebar-section-title">${label}</div>`;
-    cats.forEach(cat => {
-      const color = cat.couleur || '#9b9b97';
-      const dossiersInCat = state.dossiers.filter(d => d.categorie === cat.nom || d.categorie === cat.id);
-      out += `<div class="sidebar-item${state.filterDossier === 'cat:'+cat.id ? ' active' : ''}" onclick="filterByCat(${cat.id})">
-        <span class="sidebar-dot" style="background:${color}"></span>
-        <span>${cat.nom}</span>
-        <span class="sidebar-count">${countKnowledgeByCat(cat)}</span>
-      </div>`;
-      dossiersInCat.forEach(d => {
-        out += `<div class="sidebar-item${state.filterDossier === d.id ? ' active' : ''}" onclick="filterByDossier(${d.id})" style="padding-left:22px">
+  let h = `<div class="sb-title">Vue</div>${sbItem('all',null,'Tout',cntK('all'),'filterAll()')}<div class="sb-div"></div>`;
+  [['Inbox','Inbox'],['Domaine','Domaines'],['Ressource','Ressources']].forEach(([type,label]) => {
+    const gc = S.categories.filter(c=>c.type===type);
+    if (!gc.length) return;
+    h += `<div class="sb-title">${label}</div>`;
+    gc.forEach(cat => {
+      const color = cat.couleur||'#9b9b97';
+      const kids = S.dossiers.filter(d=>d.categorie===cat.nom||d.categorie===cat.id);
+      h += `<div class="sb-item${S.filterDossier==='cat:'+cat.id?' active':''}" onclick="filterCat(${cat.id})">
+        <span class="sb-dot" style="background:${color}"></span><span>${esc(cat.nom)}</span>
+        <span class="sb-count">${cntKCat(cat)}</span></div>`;
+      kids.forEach(d => {
+        h += `<div class="sb-item${S.filterDossier===d.id?' active':''}" onclick="filterDos(${d.id})" style="padding-left:22px">
           <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
-          <span>${d.nom}</span>
-          <span class="sidebar-count">${countKnowledgeByDossier(d.id)}</span>
-        </div>`;
+          <span>${esc(d.nom)}</span><span class="sb-count">${cntKDos(d.id)}</span></div>`;
       });
     });
-    return out + '<div class="sidebar-divider"></div>';
-  };
-
-  if (inboxCats.length) html += renderCatGroup(inboxCats, 'Inbox');
-  if (domainCats.length) html += renderCatGroup(domainCats, 'Domaines');
-  if (resourceCats.length) html += renderCatGroup(resourceCats, 'Ressources');
-
-  sb.innerHTML = html;
+    h += '<div class="sb-div"></div>';
+  });
+  sb.innerHTML = h;
 }
 
-function sidebarItem(id, color, label, count) {
-  const isActive = (id === 'all' && !state.filterDossier && state.filterType === 'all')
-    || (id === 'all-tasks' && state.filterType === 'all' && !state.filterPriority)
-    || (id === 'todo' && state.filterType === 'todo')
-    || (id === 'done' && state.filterType === 'done')
-    || (id.startsWith('p-') && state.filterPriority === label);
-
-  const onClick = id === 'all' ? "filterAll()"
-    : id === 'all-tasks' ? "filterTaskAll()"
-    : id === 'todo' ? "filterTaskStatus('todo')"
-    : id === 'done' ? "filterTaskStatus('done')"
-    : id.startsWith('p-') ? `filterTaskPriority('${label}')`
-    : '';
-
-  return `<div class="sidebar-item${isActive ? ' active' : ''}" onclick="${onClick}">
-    ${color ? `<span class="sidebar-dot" style="background:${color}"></span>` : `<span style="width:8px"></span>`}
-    <span>${label}</span>
-    <span class="sidebar-count">${count}</span>
-  </div>`;
+function sbItem(id, color, label, count, fn) {
+  const a = (id==='all'&&!S.filterDossier&&S.filterType==='all')
+    ||(id==='all-tasks'&&S.filterType==='all'&&!S.filterPriority)
+    ||(id==='todo'&&S.filterType==='todo')||(id==='done'&&S.filterType==='done')
+    ||(id==='pc'&&S.filterPriority==='Critique')||(id==='ph'&&S.filterPriority==='Haute')
+    ||(id==='pm'&&S.filterPriority==='Moyenne')||(id==='pb'&&S.filterPriority==='Basse');
+  return `<div class="sb-item${a?' active':''}" onclick="${fn}">
+    ${color?`<span class="sb-dot" style="background:${color}"></span>`:`<span style="width:8px"></span>`}
+    <span>${label}</span><span class="sb-count">${count}</span></div>`;
 }
 
-function filterAll() { state.filterDossier = null; state.filterType = 'all'; render(); }
-function filterByCat(id) { state.filterDossier = 'cat:'+id; render(); }
-function filterByDossier(id) { state.filterDossier = id; render(); }
-function filterTaskAll() { state.filterType = 'all'; state.filterPriority = null; render(); }
-function filterTaskStatus(s) { state.filterType = s; state.filterPriority = null; render(); }
-function filterTaskPriority(p) { state.filterPriority = p; state.filterType = 'all'; render(); }
+function filterAll(){S.filterDossier=null;S.filterType='all';render()}
+function filterCat(id){S.filterDossier='cat:'+id;render()}
+function filterDos(id){S.filterDossier=id;render()}
+function filterTaskAll(){S.filterType='all';S.filterPriority=null;render()}
+function filterTaskStatus(s){S.filterType=s;S.filterPriority=null;render()}
+function filterTaskP(p){S.filterPriority=p;S.filterType='all';render()}
 
-// ══════════════════════════════════════════════
-//  TOOLBAR
-// ══════════════════════════════════════════════
-function renderToolbar() {
-  const tb = document.getElementById('toolbar');
-
-  if (state.tab === 'tasks') {
-    tb.innerHTML = `
-      <span class="toolbar-title">Tâches</span>
-      <div class="filter-group">
-        <span class="filter-chip${state.filterType==='all'?' active':''}" onclick="filterTaskAll()">Toutes</span>
-        <span class="filter-chip${state.filterType==='todo'?' active':''}" onclick="filterTaskStatus('todo')">À faire</span>
-        <span class="filter-chip${state.filterType==='done'?' active':''}" onclick="filterTaskStatus('done')">Terminées</span>
+// ─── TOOLBAR ───
+function rToolbar() {
+  const tb=document.getElementById('toolbar');
+  if (S.tab==='tasks') {
+    tb.innerHTML=`<span class="tb-title">Tâches</span>
+      <div class="chips">
+        <span class="chip${S.filterType==='all'?' active':''}" onclick="filterTaskAll()">Toutes</span>
+        <span class="chip${S.filterType==='todo'?' active':''}" onclick="filterTaskStatus('todo')">À faire</span>
+        <span class="chip${S.filterType==='done'?' active':''}" onclick="filterTaskStatus('done')">Terminées</span>
       </div>
       <div class="spacer"></div>
-      <div class="search-wrap">
-        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <input type="text" placeholder="Rechercher…" value="${escHtml(state.search)}" oninput="onSearch(this.value)">
-      </div>
-    `;
+      <div class="srch"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" placeholder="Rechercher…" value="${esc(S.search)}" oninput="S.search=this.value;rContent()"></div>`;
     return;
   }
-
-  tb.innerHTML = `
-    <span class="toolbar-title">Connaissances</span>
-    <div class="filter-group">
-      <span class="filter-chip${state.filterType==='all'?' active':''}" onclick="setKnowledgeType('all')">Tout</span>
-      <span class="filter-chip${state.filterType==='web'?' active':''}" onclick="setKnowledgeType('web')">
-        ${svgWeb(12)} Web
-      </span>
-      <span class="filter-chip${state.filterType==='note'?' active':''}" onclick="setKnowledgeType('note')">
-        ${svgNote(12)} Notes
-      </span>
-      <span class="filter-chip${state.filterType==='fichier'?' active':''}" onclick="setKnowledgeType('fichier')">
-        ${svgFile(12)} Fichiers
-      </span>
+  tb.innerHTML=`<span class="tb-title">Connaissances</span>
+    <div class="chips">
+      <span class="chip${S.filterType==='all'?' active':''}" onclick="setKType('all')">Tout</span>
+      <span class="chip${S.filterType==='web'?' active':''}" onclick="setKType('web')">${iWeb(12)} Web</span>
+      <span class="chip${S.filterType==='note'?' active':''}" onclick="setKType('note')">${iNote(12)} Notes</span>
+      <span class="chip${S.filterType==='fichier'?' active':''}" onclick="setKType('fichier')">${iFile(12)} Fichiers</span>
     </div>
     <div class="spacer"></div>
-    <select style="padding:5px 8px;border-radius:6px;border:1px solid var(--border2);font-family:inherit;font-size:12.5px;color:var(--text2);background:var(--bg2);outline:none" onchange="state.groupBy=this.value;render()">
-      <option value="dossier"${state.groupBy==='dossier'?' selected':''}>Par dossier</option>
-      <option value="type"${state.groupBy==='type'?' selected':''}>Par type</option>
-      <option value="categorie"${state.groupBy==='categorie'?' selected':''}>Par catégorie</option>
-      <option value="none"${state.groupBy==='none'?' selected':''}>Sans groupe</option>
+    <select style="padding:5px 8px;border-radius:6px;border:1px solid var(--border2);font-family:inherit;font-size:12.5px;color:var(--text2);background:var(--bg2);outline:none" onchange="S.groupBy=this.value;render()">
+      <option value="dossier"${S.groupBy==='dossier'?' selected':''}>Par dossier</option>
+      <option value="type"${S.groupBy==='type'?' selected':''}>Par type</option>
+      <option value="categorie"${S.groupBy==='categorie'?' selected':''}>Par catégorie</option>
+      <option value="none"${S.groupBy==='none'?' selected':''}>Sans groupe</option>
     </select>
-    <div class="view-toggle">
-      <button class="view-toggle-btn${state.viewMode==='list'?' active':''}" onclick="state.viewMode='list';renderContent()" title="Vue liste">
+    <div class="vtoggle">
+      <button class="vtbtn${S.viewMode==='list'?' active':''}" onclick="S.viewMode='list';rContent()" title="Liste">
         <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
       </button>
-      <button class="view-toggle-btn${state.viewMode==='grid'?' active':''}" onclick="state.viewMode='grid';renderContent()" title="Vue grille">
+      <button class="vtbtn${S.viewMode==='grid'?' active':''}" onclick="S.viewMode='grid';rContent()" title="Grille">
         <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
       </button>
     </div>
-    <div class="search-wrap">
-      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-      <input type="text" placeholder="Rechercher…" value="${escHtml(state.search)}" oninput="onSearch(this.value)">
-    </div>
-  `;
+    <div class="srch"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" placeholder="Rechercher…" value="${esc(S.search)}" oninput="S.search=this.value;rContent()"></div>`;
 }
 
-function setKnowledgeType(t) { state.filterType = t; render(); }
-function onSearch(v) { state.search = v; renderContent(); }
+function setKType(t){S.filterType=t;render()}
 
-// ══════════════════════════════════════════════
-//  CONTENT
-// ══════════════════════════════════════════════
-function renderContent() {
-  const el = document.getElementById('content');
-  if (state.tab === 'tasks') {
-    el.innerHTML = renderTasks();
-  } else {
-    el.innerHTML = renderKnowledge();
-  }
-}
+// ─── CONTENT ───
+function rContent() { document.getElementById('content').innerHTML = S.tab==='tasks' ? rTasks() : rKnowledge(); }
 
-// ── TASKS ──
-function renderTasks() {
-  let tasks = state.items.filter(i => i.type === 'action');
-  if (state.filterType === 'todo') tasks = tasks.filter(i => !i.termine);
-  else if (state.filterType === 'done') tasks = tasks.filter(i => i.termine);
-  if (state.filterPriority) tasks = tasks.filter(i => i.priorite === state.filterPriority);
-  if (state.search) tasks = tasks.filter(i => (i.nom||'').toLowerCase().includes(state.search.toLowerCase()));
-
-  if (!tasks.length) return emptyState('Aucune tâche', 'Ajoutez votre première tâche avec le bouton « Ajouter »');
-
-  // Group by priority
-  const groups = [
-    { key: 'Critique', label: 'Critique', color: '#ef4444' },
-    { key: 'Haute', label: 'Haute', color: '#f97316' },
-    { key: 'Moyenne', label: 'Moyenne', color: '#eab308' },
-    { key: 'Basse', label: 'Basse', color: '#22c55e' },
-    { key: null, label: 'Sans priorité', color: '#9b9b97' },
-  ];
-
-  let html = '';
-  groups.forEach(g => {
-    const items = tasks.filter(t => (t.priorite || null) === g.key);
-    if (!items.length) return;
-    html += `<div class="task-group">
-      <div class="task-group-header">
-        <span style="width:8px;height:8px;border-radius:50%;background:${g.color};display:inline-block"></span>
-        ${g.label} <span style="color:var(--text3);font-weight:400">(${items.length})</span>
-      </div>`;
-    items.forEach(t => { html += taskItem(t); });
-    html += `</div>`;
+// ─ TASKS ─
+function rTasks() {
+  let tasks = S.items.filter(i=>i.type==='action');
+  if (S.filterType==='todo') tasks=tasks.filter(i=>!i.termine);
+  else if (S.filterType==='done') tasks=tasks.filter(i=>i.termine);
+  if (S.filterPriority) tasks=tasks.filter(i=>i.priorite===S.filterPriority);
+  if (S.search) tasks=tasks.filter(i=>(i.nom||'').toLowerCase().includes(S.search.toLowerCase()));
+  if (!tasks.length) return emptyEl('Aucune tâche','Ajoutez votre première tâche');
+  const grps=[{k:'Critique',c:'#ef4444'},{k:'Haute',c:'#f97316'},{k:'Moyenne',c:'#eab308'},{k:'Basse',c:'#22c55e'},{k:null,l:'Sans priorité',c:'#9b9b97'}];
+  let h='';
+  grps.forEach(g=>{
+    const its=tasks.filter(t=>(t.priorite||null)===g.k);
+    if(!its.length)return;
+    h+=`<div class="tg"><div class="tg-hd"><span style="width:8px;height:8px;border-radius:50%;background:${g.c};display:inline-block"></span>${g.l||g.k} <span style="color:var(--text3);font-weight:400">(${its.length})</span></div>`;
+    its.forEach(t=>{h+=taskRow(t);}); h+='</div>';
   });
-
-  return html + `<div class="task-section-add" onclick="openAddModal('action')">
-    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-    Ajouter une tâche
-  </div>`;
+  return h+`<div class="tadd" onclick="openAddModal('action')"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Ajouter une tâche</div>`;
 }
 
-function taskItem(t) {
-  const checked = t.termine ? 'checked' : '';
-  const done = t.termine ? 'done' : '';
-  const pClass = t.priorite ? `priority-${t.priorite.toLowerCase()}` : '';
-  const dateStr = t.echeance ? formatDate(t.echeance) : '';
-  const isOverdue = t.echeance && !t.termine && new Date(t.echeance * 1000) < new Date();
-
-  return `<div class="task-item ${done}" onclick="openDetailModal(${t.id})">
-    <div class="task-checkbox ${checked}" onclick="event.stopPropagation();toggleTask(${t.id})">
-      <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+function taskRow(t) {
+  const p=t.priorite?`priority-${t.priorite.toLowerCase()}`:'', pc={Critique:'pc',Haute:'ph',Moyenne:'pm',Basse:'pb'}[t.priorite]||'';
+  const ds=t.echeance?fmtDate(t.echeance):'', od=t.echeance&&!t.termine&&new Date(t.echeance*1000)<new Date();
+  return `<div class="ti${t.termine?' done':''}" onclick="openDet(${t.id})">
+    <div class="chk ${t.termine?'checked':''}" onclick="event.stopPropagation();toggleTask(${t.id})"><svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+    <span class="tname">${esc(t.nom||'Sans titre')}</span>
+    <div class="tmeta">
+      ${t.priorite?`<span class="pbadge ${pc}">${t.priorite}</span>`:''}
+      ${ds?`<span class="tdate${od?' od':''}">${ds}</span>`:''}
     </div>
-    <span class="task-name">${escHtml(t.nom || 'Sans titre')}</span>
-    <div class="task-meta">
-      ${t.priorite ? `<span class="priority-badge ${pClass}">${t.priorite}</span>` : ''}
-      ${dateStr ? `<span class="task-date${isOverdue?' overdue':''}">${dateStr}</span>` : ''}
-    </div>
-    <div class="task-actions">
-      <button class="icon-btn tooltip" data-tip="Modifier" onclick="event.stopPropagation();openEditModal(${t.id})">
-        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-      </button>
-      <button class="icon-btn tooltip" data-tip="Supprimer" onclick="event.stopPropagation();deleteItem(${t.id})">
-        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
-      </button>
-    </div>
-  </div>`;
+    <div class="tacts">
+      <button class="ibtn" onclick="event.stopPropagation();openEdit(${t.id})">${iEdit()}</button>
+      <button class="ibtn" onclick="event.stopPropagation();delItem(${t.id})">${iDel()}</button>
+    </div></div>`;
 }
 
-// ── KNOWLEDGE ──
-function renderKnowledge() {
-  let items = state.items.filter(i => ['web','fichier','note'].includes(i.type));
-
-  if (state.filterType !== 'all') items = items.filter(i => i.type === state.filterType);
-  if (state.filterDossier) {
-    if (String(state.filterDossier).startsWith('cat:')) {
-      const catId = parseInt(state.filterDossier.split(':')[1]);
-      const cat = state.categories.find(c => c.id === catId);
-      if (cat) {
-        const dosIds = state.dossiers.filter(d => d.categorie === cat.nom || d.categorie === cat.id).map(d => d.id);
-        items = items.filter(i => dosIds.includes(i.dossier));
-      }
-    } else {
-      items = items.filter(i => i.dossier === state.filterDossier);
-    }
+// ─ KNOWLEDGE ─
+function rKnowledge() {
+  let items = S.items.filter(i=>['web','fichier','note'].includes(i.type));
+  if (S.filterType!=='all') items=items.filter(i=>i.type===S.filterType);
+  if (S.filterDossier) {
+    if (String(S.filterDossier).startsWith('cat:')) {
+      const cid=parseInt(S.filterDossier.split(':')[1]);
+      const cat=S.categories.find(c=>c.id===cid);
+      if (cat) { const dids=S.dossiers.filter(d=>d.categorie===cat.nom||d.categorie===cat.id).map(d=>d.id); items=items.filter(i=>dids.includes(i.dossier)); }
+    } else items=items.filter(i=>i.dossier===S.filterDossier);
   }
-  if (state.search) items = items.filter(i =>
-    (i.nom||'').toLowerCase().includes(state.search.toLowerCase()) ||
-    (i.description||'').toLowerCase().includes(state.search.toLowerCase())
-  );
+  if (S.search) items=items.filter(i=>(i.nom||'').toLowerCase().includes(S.search.toLowerCase())||(i.description||'').toLowerCase().includes(S.search.toLowerCase()));
+  if (!items.length) return emptyEl('Aucun contenu','Ajoutez votre première ressource');
 
-  if (!items.length) return emptyState('Aucun contenu', 'Ajoutez votre première ressource avec le bouton « Ajouter »');
-
-  if (state.viewMode === 'grid') {
-    // GRID MODE
-    if (state.groupBy === 'none') {
-      return `<div class="knowledge-grid">${items.map(knowledgeCard).join('')}</div>`;
-    }
-    const groups = buildGroups(items, state.groupBy);
-    let html = '';
-    groups.forEach(g => {
-      html += `<div class="group-label">
-        ${g.color ? `<span class="group-label-dot" style="background:${g.color}"></span>` : ''}
-        ${escHtml(g.label)} <span style="color:var(--text3);font-size:12px;font-weight:400">${g.items.length}</span>
-      </div>
-      <div class="knowledge-grid" style="margin-bottom:24px">${g.items.map(knowledgeCard).join('')}</div>`;
-    });
-    return html;
+  if (S.viewMode==='grid') {
+    if (S.groupBy==='none') return `<div class="kgrid">${items.map(kCard).join('')}</div>`;
+    return buildGroups(items,S.groupBy).map(g=>`
+      <div class="glabel">${g.c?`<span style="width:8px;height:8px;border-radius:50%;background:${g.c};display:inline-block"></span>`:''}${esc(g.l)} <span style="color:var(--text3);font-size:12px;font-weight:400">${g.items.length}</span></div>
+      <div class="kgrid" style="margin-bottom:24px">${g.items.map(kCard).join('')}</div>`).join('');
   }
-
-  // LIST MODE (default)
-  if (state.groupBy === 'none') {
-    return knowledgeTable(items, false);
-  }
-  const groups = buildGroups(items, state.groupBy);
-  let html = '';
-  groups.forEach((g, idx) => {
-    html += `<div class="list-group-header">
-      ${g.color ? `<span style="width:8px;height:8px;border-radius:50%;background:${g.color};display:inline-block"></span>` : ''}
-      ${escHtml(g.label)}
-      <span style="font-weight:400;color:var(--text3)">${g.items.length}</span>
-    </div>`;
-    html += knowledgeTable(g.items, state.groupBy === 'dossier');
-  });
-  return html;
+  if (S.groupBy==='none') return kTable(items,false);
+  return buildGroups(items,S.groupBy).map(g=>`
+    <div class="lgh">${g.c?`<span style="width:8px;height:8px;border-radius:50%;background:${g.c};display:inline-block"></span>`:''}${esc(g.l)} <span style="font-weight:400;color:var(--text3)">${g.items.length}</span></div>
+    ${kTable(g.items,S.groupBy==='dossier')}`).join('');
 }
 
-function knowledgeTable(items, hideDossier) {
-  const showFolder = !hideDossier;
-  const rows = items.map(item => {
-    const d = state.dossiers.find(d => d.id === item.dossier);
-    const cat = d ? state.categories.find(c => c.nom === d.categorie || c.id === d.categorie) : null;
-    const catColor = cat ? (cat.couleur || '#9b9b97') : '#9b9b97';
-    const desc = item.description ? stripHtml(item.description) : '';
+function kCard(item) {
+  const d=S.dossiers.find(d=>d.id===item.dossier);
+  const cat=d?S.categories.find(c=>c.nom===d.categorie||c.id===d.categorie):null;
+  const cc=cat?(cat.couleur||'#9b9b97'):'#9b9b97';
+  const aids=parseAttachIds(item.fichier);
+  const iconMap={web:`<div class="ci ci-web">${iWeb(16)}</div>`,fichier:`<div class="ci ci-fichier">${iFile(16)}</div>`,note:`<div class="ci ci-note">${iNote(16)}</div>`};
+  return `<div class="kcard" onclick="openDet(${item.id})">
+    <div class="ch">${iconMap[item.type]||''}<span class="ctitle">${esc(item.nom||'Sans titre')}</span></div>
+    ${item.description?`<p class="cdesc">${esc(strip(item.description))}</p>`:''}
+    <div class="cfoot">
+      ${d?`<span class="ftag"><span class="fdot" style="background:${cc}"></span>${esc(d.nom)}</span>`:''}
+      ${aids.length?`<button class="achip" onclick="event.stopPropagation();openDet(${item.id})">${iAttach(11)} ${aids.length} pièce${aids.length>1?'s':''}</button>`:''}
+      <span class="tbadge t${item.type[0]}" style="margin-left:auto">${item.type}</span>
+    </div></div>`;
+}
 
-    const iconClasses = { web: 'card-icon-web', fichier: 'card-icon-fichier', note: 'card-icon-note' };
-    const icon = `<div class="kt-icon ${iconClasses[item.type]||''}">${{web:svgWeb(13),fichier:svgFile(13),note:svgNote(13)}[item.type]||''}</div>`;
-    const badge = `<span class="card-type-badge badge-${item.type}">${item.type}</span>`;
-
-    const folderCell = showFolder && d
-      ? `<td class="kt-folder"><span class="folder-tag"><span class="folder-dot" style="background:${catColor}"></span>${escHtml(d.nom)}</span></td>`
-      : showFolder ? `<td></td>` : '';
-
-    const linkCell = item.lien
-      ? `<td><a href="${escHtml(item.lien)}" target="_blank" class="kt-link" onclick="event.stopPropagation()">${escHtml(item.lien.replace(/^https?:\/\/(www\.)?/,'').split('/')[0])}</a></td>`
-      : `<td></td>`;
-
-    return `<tr onclick="openDetailModal(${item.id})">
-      <td class="kt-icon-cell">${icon}</td>
-      <td>
-        <div class="kt-name">${escHtml(item.nom || 'Sans titre')}</div>
-        ${desc ? `<div class="kt-name-sub">${escHtml(desc.substring(0,120))}</div>` : ''}
-      </td>
-      ${folderCell}
-      ${linkCell}
-      <td>${badge}</td>
-      <td>
-        <div class="kt-actions">
-          <button class="icon-btn" title="Modifier" onclick="event.stopPropagation();openEditModal(${item.id})">
-            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-          </button>
-          <button class="icon-btn" title="Supprimer" onclick="event.stopPropagation();deleteItem(${item.id})">
-            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
-          </button>
-        </div>
-      </td>
-    </tr>`;
+function kTable(items, hideDossier) {
+  const sf=!hideDossier;
+  const rows=items.map(item=>{
+    const d=S.dossiers.find(d=>d.id===item.dossier);
+    const cat=d?S.categories.find(c=>c.nom===d.categorie||c.id===d.categorie):null;
+    const cc=cat?(cat.couleur||'#9b9b97'):'#9b9b97';
+    const desc=item.description?strip(item.description):'';
+    const aids=parseAttachIds(item.fichier);
+    const iCls={web:'ci-web',fichier:'ci-fichier',note:'ci-note'};
+    const ico=`<div class="ki ${iCls[item.type]||''}">${{web:iWeb(13),fichier:iFile(13),note:iNote(13)}[item.type]||''}</div>`;
+    const fc=sf?`<td class="kfolder">${d?`<span class="ftag"><span class="fdot" style="background:${cc}"></span>${esc(d.nom)}</span>`:''}</td>`:'';
+    const lc=item.lien?`<td><a href="${esc(item.lien)}" target="_blank" class="klink" onclick="event.stopPropagation()">${esc(item.lien.replace(/^https?:\/\/(www\.)?/,'').split('/')[0])}</a></td>`:`<td></td>`;
+    const ac=`<td>${aids.length?`<button class="achip" onclick="event.stopPropagation();openDet(${item.id})">${iAttach(11)} ${aids.length}</button>`:''}</td>`;
+    return `<tr onclick="openDet(${item.id})">
+      <td class="ki-cell">${ico}</td>
+      <td><div class="kname">${esc(item.nom||'Sans titre')}</div>${desc?`<div class="ksub">${esc(desc.substring(0,100))}</div>`:''}</td>
+      ${fc}${lc}${ac}
+      <td><span class="tbadge t${item.type[0]}">${item.type}</span></td>
+      <td><div class="kacts">
+        <button class="ibtn" onclick="event.stopPropagation();openEdit(${item.id})">${iEdit()}</button>
+        <button class="ibtn" onclick="event.stopPropagation();delItem(${item.id})">${iDel()}</button>
+      </div></td></tr>`;
   }).join('');
-
-  return `<table class="knowledge-table">
-    <thead><tr>
-      <th class="kt-icon-cell"></th>
-      <th>Nom</th>
-      ${showFolder ? '<th>Dossier</th>' : ''}
-      <th>Lien</th>
-      <th>Type</th>
-      <th></th>
-    </tr></thead>
-    <tbody>${rows}</tbody>
-  </table>`;
+  return `<table class="ktable"><thead><tr>
+    <th class="ki-cell"></th><th>Nom</th>${sf?'<th>Dossier</th>':''}<th>Lien</th><th>Fichiers</th><th>Type</th><th></th>
+  </tr></thead><tbody>${rows}</tbody></table>`;
 }
 
-function buildGroups(items, by) {
-  const map = new Map();
-  items.forEach(item => {
-    let key, label, color = null;
-    if (by === 'dossier') {
-      const d = state.dossiers.find(d => d.id === item.dossier);
-      key = item.dossier || '__none';
-      label = d ? d.nom : 'Sans dossier';
-      if (d) {
-        const cat = state.categories.find(c => c.nom === d.categorie || c.id === d.categorie);
-        color = cat ? (cat.couleur || null) : null;
-      }
-    } else if (by === 'type') {
-      key = item.type || '__none';
-      label = { web: 'Web', fichier: 'Fichiers', note: 'Notes' }[item.type] || item.type;
-      color = { web: '#2563eb', fichier: '#16a34a', note: '#ca8a04' }[item.type] || null;
-    } else if (by === 'categorie') {
-      const d = state.dossiers.find(d => d.id === item.dossier);
-      const cat = d ? state.categories.find(c => c.nom === d.categorie || c.id === d.categorie) : null;
-      key = cat ? cat.id : '__none';
-      label = cat ? cat.nom : 'Sans catégorie';
-      color = cat ? (cat.couleur || null) : null;
-    }
-    if (!map.has(key)) map.set(key, { label, color, items: [] });
-    map.get(key).items.push(item);
+function buildGroups(items,by) {
+  const m=new Map();
+  items.forEach(item=>{
+    let key,l,c=null;
+    if(by==='dossier'){const d=S.dossiers.find(d=>d.id===item.dossier);key=item.dossier||'__';l=d?d.nom:'Sans dossier';if(d){const cat=S.categories.find(c=>c.nom===d.categorie||c.id===d.categorie);c=cat?(cat.couleur||null):null;}}
+    else if(by==='type'){key=item.type||'__';l={web:'Web',fichier:'Fichiers',note:'Notes'}[item.type]||item.type;c={web:'#2563eb',fichier:'#16a34a',note:'#ca8a04'}[item.type]||null;}
+    else if(by==='categorie'){const d=S.dossiers.find(d=>d.id===item.dossier);const cat=d?S.categories.find(c=>c.nom===d.categorie||c.id===d.categorie):null;key=cat?cat.id:'__';l=cat?cat.nom:'Sans catégorie';c=cat?(cat.couleur||null):null;}
+    if(!m.has(key))m.set(key,{l,c,items:[]});m.get(key).items.push(item);
   });
-  return Array.from(map.values());
+  return Array.from(m.values());
 }
 
-function knowledgeCard(item) {
-  const d = state.dossiers.find(d => d.id === item.dossier);
-  const cat = d ? state.categories.find(c => c.nom === d.categorie || c.id === d.categorie) : null;
-  const catColor = cat ? (cat.couleur || '#9b9b97') : '#9b9b97';
+// ═══════════════════════════════
+//  ADD / EDIT MODAL
+// ═══════════════════════════════
+let mMode='add', mItemId=null, mType='note';
+let mPending=[]; // File[] not yet uploaded
+let mExisting=[]; // existing attach IDs
 
-  const icon = {
-    web: `<div class="card-icon card-icon-web">${svgWeb(16)}</div>`,
-    fichier: `<div class="card-icon card-icon-fichier">${svgFile(16)}</div>`,
-    note: `<div class="card-icon card-icon-note">${svgNote(16)}</div>`,
-  }[item.type] || '';
-
-  const badge = `<span class="card-type-badge badge-${item.type}">${item.type}</span>`;
-
-  return `<div class="knowledge-card" onclick="openDetailModal(${item.id})">
-    <div class="card-header">
-      ${icon}
-      <span class="card-title">${escHtml(item.nom || 'Sans titre')}</span>
-    </div>
-    ${item.description ? `<p class="card-desc">${escHtml(stripHtml(item.description))}</p>` : ''}
-    <div class="card-footer">
-      ${d ? `<span class="folder-tag"><span class="folder-dot" style="background:${catColor}"></span>${escHtml(d.nom)}</span>` : ''}
-      ${badge}
-    </div>
-  </div>`;
+function openAddModal(def) {
+  mMode='add'; mItemId=null; mType=def||(S.tab==='tasks'?'action':'note');
+  mPending=[]; mExisting=[];
+  document.getElementById('modalTitle').textContent='Ajouter';
+  buildForm(mType,null);
+  document.getElementById('addOv').classList.add('open');
 }
-
-// ══════════════════════════════════════════════
-//  MODALS
-// ══════════════════════════════════════════════
-let modalMode = 'add'; // 'add' | 'edit'
-let modalItemId = null;
-let modalCurrentType = 'note';
-
-function openAddModal(defaultType) {
-  modalMode = 'add';
-  modalItemId = null;
-  modalCurrentType = defaultType || (state.tab === 'tasks' ? 'action' : 'note');
-  document.getElementById('modalTitle').textContent = 'Ajouter';
-  buildModalBody(modalCurrentType, null);
-  document.getElementById('addOverlay').classList.add('open');
+function openEdit(id) {
+  const it=S.items.find(i=>i.id===id); if(!it)return;
+  mMode='edit'; mItemId=id; mType=it.type;
+  mPending=[]; mExisting=parseAttachIds(it.fichier);
+  document.getElementById('modalTitle').textContent='Modifier';
+  buildForm(it.type,it);
+  document.getElementById('addOv').classList.add('open');
 }
+function editFromDetail(){closeDetModal();if(S.detailItem)openEdit(S.detailItem.id)}
+function closeAddModal(){document.getElementById('addOv').classList.remove('open')}
 
-function openEditModal(id) {
-  const item = state.items.find(i => i.id === id);
-  if (!item) return;
-  modalMode = 'edit';
-  modalItemId = id;
-  modalCurrentType = item.type;
-  document.getElementById('modalTitle').textContent = 'Modifier';
-  buildModalBody(item.type, item);
-  document.getElementById('addOverlay').classList.add('open');
-}
+function buildForm(type, item) {
+  const body=document.getElementById('modalBody');
+  const dosOpts=S.dossiers.map(d=>`<option value="${d.id}"${item&&item.dossier===d.id?' selected':''}>${esc(d.nom)}</option>`).join('');
+  const prioOpts=['Critique','Haute','Moyenne','Basse'].map(p=>`<option value="${p}"${item&&item.priorite===p?' selected':''}>${p}</option>`).join('');
+  const dv=item&&item.echeance?new Date(item.echeance*1000).toISOString().split('T')[0]:'';
 
-function editFromDetail() {
-  closeDetailModal();
-  if (state.detailItem) openEditModal(state.detailItem.id);
-}
+  const typesel=S.tab!=='tasks'?`<div class="ff"><div class="tysel">
+    ${tyBtn('note','Note',iNote(18))}${tyBtn('web','Lien Web',iWeb(18))}${tyBtn('fichier','Fichier',iFile(18))}
+  </div></div>`:'';
 
-function closeAddModal() {
-  document.getElementById('addOverlay').classList.remove('open');
-}
-
-function buildModalBody(type, item) {
-  const body = document.getElementById('modalBody');
-  const dossierOpts = state.dossiers.map(d =>
-    `<option value="${d.id}"${item && item.dossier === d.id ? ' selected' : ''}>${escHtml(d.nom)}</option>`
-  ).join('');
-  const prioOpts = ['Critique','Haute','Moyenne','Basse'].map(p =>
-    `<option value="${p}"${item && item.priorite === p ? ' selected' : ''}>${p}</option>`
-  ).join('');
-
-  let typeSelector = '';
-  if (state.tab !== 'tasks') {
-    typeSelector = `<div class="form-field">
-      <div class="type-selector">
-        ${typeBtn('note', 'Note', svgNote(18))}
-        ${typeBtn('web', 'Lien Web', svgWeb(18))}
-        ${typeBtn('fichier', 'Fichier', svgFile(18))}
+  const fileSection = type==='fichier'?`
+    <div class="ff"><label class="fl">Pièces jointes</label>
+      <div id="mExistList" class="alist" style="margin-bottom:6px"></div>
+      <div class="upzone" id="upZone">
+        <input type="file" id="fInput" multiple onchange="onFileChange(this)" onclick="event.stopPropagation()">
+        <div style="margin-bottom:6px">${iAttach(20)}</div>
+        <div>Glissez un fichier ici ou <strong>cliquez pour parcourir</strong></div>
+        <div style="font-size:11.5px;margin-top:3px;color:var(--text3)">PDF, images, Word, Excel…</div>
       </div>
-    </div>`;
+      <div id="mPendList" class="alist" style="margin-top:6px"></div>
+    </div>`:''
+
+  body.innerHTML = typesel+`
+    <div class="ff"><label class="fl">Nom</label>
+      <input class="fi" id="fNom" type="text" placeholder="Titre…" value="${item?esc(item.nom||'):''}">
+    </div>
+    ${type!=='action'?`<div class="ff"><label class="fl">Description</label>
+      <textarea class="fta" id="fDesc" placeholder="Description…">${item?esc(item.description||''):''}</textarea>
+    </div>`:''}
+    ${type==='web'?`<div class="ff"><label class="fl">URL</label>
+      <input class="fi" id="fLien" type="url" placeholder="https://…" value="${item?esc(item.lien||'):''}">
+    </div>`:''}
+    ${fileSection}
+    ${type!=='action'?`<div class="ff"><label class="fl">Dossier</label>
+      <select class="fs" id="fDos"><option value="">— Aucun —</option>${dosOpts}</select>
+    </div>`:''}
+    ${type==='action'?`
+    <div class="ff"><label class="fl">Priorité</label>
+      <select class="fs" id="fPrio"><option value="">— Aucune —</option>${prioOpts}</select>
+    </div>
+    <div class="ff"><label class="fl">Échéance</label>
+      <input class="fi" id="fEch" type="date" value="${dv}">
+    </div>`:''}`;
+
+  mType=type;
+  body.querySelectorAll('.tybtn').forEach(b=>{
+    b.classList.toggle('active',b.dataset.type===type);
+    b.onclick=()=>{mType=b.dataset.type;mPending=[];buildForm(b.dataset.type,null)};
+  });
+
+  if (item&&item.dossier){const s=document.getElementById('fDos');if(s)s.value=item.dossier;}
+
+  if (type==='fichier') {
+    rExistList(); rPendList(); setupDrop();
   }
+}
 
-  const dateVal = item && item.echeance ? new Date(item.echeance * 1000).toISOString().split('T')[0] : '';
+function setupDrop() {
+  const z=document.getElementById('upZone'); if(!z)return;
+  z.addEventListener('dragover',e=>{e.preventDefault();z.classList.add('drag-over')});
+  z.addEventListener('dragleave',()=>z.classList.remove('drag-over'));
+  z.addEventListener('drop',e=>{e.preventDefault();z.classList.remove('drag-over');Array.from(e.dataTransfer.files).forEach(f=>mPending.push(f));rPendList();});
+}
 
-  body.innerHTML = typeSelector + `
-    <div class="form-field">
-      <label class="form-label">Nom</label>
-      <input class="form-input" id="f-nom" type="text" placeholder="Titre…" value="${item ? escHtml(item.nom||'') : ''}">
-    </div>
-    ${type !== 'action' ? `<div class="form-field">
-      <label class="form-label">Description</label>
-      <textarea class="form-textarea" id="f-desc" placeholder="Description…">${item ? escHtml(item.description||'') : ''}</textarea>
-    </div>` : ''}
-    ${type === 'web' ? `<div class="form-field">
-      <label class="form-label">URL</label>
-      <input class="form-input" id="f-lien" type="url" placeholder="https://…" value="${item ? escHtml(item.lien||'') : ''}">
-    </div>` : ''}
-    ${type !== 'action' ? `<div class="form-field">
-      <label class="form-label">Dossier</label>
-      <select class="form-select" id="f-dossier"><option value="">— Aucun —</option>${dossierOpts}</select>
-    </div>` : ''}
-    ${type === 'action' ? `
-    <div class="form-field">
-      <label class="form-label">Priorité</label>
-      <select class="form-select" id="f-priorite"><option value="">— Aucune —</option>${prioOpts}</select>
-    </div>
-    <div class="form-field">
-      <label class="form-label">Échéance</label>
-      <input class="form-input" id="f-echeance" type="date" value="${dateVal}">
-    </div>` : ''}
-  `;
+function onFileChange(inp) { Array.from(inp.files).forEach(f=>mPending.push(f)); inp.value=''; rPendList(); }
 
-  modalCurrentType = type;
-  // Activate type buttons
-  body.querySelectorAll('.type-btn').forEach(b => {
-    b.classList.toggle('active', b.dataset.type === type);
-    b.onclick = () => { modalCurrentType = b.dataset.type; buildModalBody(b.dataset.type, null); };
+function rExistList() {
+  const el=document.getElementById('mExistList'); if(!el)return;
+  if(!mExisting.length){el.innerHTML='';return;}
+  el.innerHTML='<div style="font-size:12px;color:var(--text3);margin-bottom:4px">Fichiers existants :</div>';
+  mExisting.forEach(id=>{
+    const meta=metaCache[id];
+    const name=meta?meta.fileName:`Fichier ${id}`, sz=meta?fmtSz(meta.fileSize||0):'';
+    const row=document.createElement('div'); row.className='arow'; row.id='er-'+id;
+    row.innerHTML=`${aIconHtml(name)}<span class="aname">${esc(name)}</span>${sz?`<span class="asize">${sz}</span>`:''}
+      <div class="aacts">
+        <button class="ibtn" title="Aperçu" onclick="prevAttach(${id},'${esc(name).replace(/'/g,"\\'")}')">
+          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        </button>
+        <button class="ibtn" title="Retirer" onclick="rmExist(${id})">
+          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+        </button>
+      </div>`;
+    el.appendChild(row);
+    if (!meta&&gristDocId) fetchMeta(id).then(()=>rExistList());
   });
 }
 
-function typeBtn(type, label, iconSvg) {
-  return `<button class="type-btn${modalCurrentType===type?' active':''}" data-type="${type}" onclick="modalCurrentType='${type}';buildModalBody('${type}',null)">
-    ${iconSvg}
-    ${label}
-  </button>`;
+function rmExist(id){mExisting=mExisting.filter(i=>i!==id);rExistList()}
+
+function rPendList() {
+  const el=document.getElementById('mPendList'); if(!el)return;
+  if(!mPending.length){el.innerHTML='';return;}
+  el.innerHTML='<div style="font-size:12px;color:var(--text3);margin-bottom:4px">À ajouter :</div>';
+  mPending.forEach((f,i)=>{
+    const row=document.createElement('div'); row.className='arow'; row.style.borderColor='var(--accent)'; row.style.background='var(--accent-light)';
+    row.innerHTML=`${aIconHtml(f.name)}<span class="aname">${esc(f.name)}</span><span class="asize">${fmtSz(f.size)}</span>
+      <div class="aacts"><button class="ibtn" onclick="rmPend(${i})"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>`;
+    el.appendChild(row);
+  });
+}
+
+function rmPend(i){mPending.splice(i,1);rPendList()}
+
+function tyBtn(type,label,icon) {
+  return `<button class="tybtn${mType===type?' active':''}" data-type="${type}">${icon}${label}</button>`;
 }
 
 async function saveModal() {
-  const nom = document.getElementById('f-nom')?.value?.trim();
-  if (!nom) { alert('Veuillez saisir un nom.'); return; }
-
-  const rec = { nom, type: modalCurrentType };
-  const desc = document.getElementById('f-desc');
-  if (desc) rec.description = desc.value;
-  const lien = document.getElementById('f-lien');
-  if (lien) rec.lien = lien.value;
-  const dos = document.getElementById('f-dossier');
-  if (dos && dos.value) rec.dossier = parseInt(dos.value);
-  const prio = document.getElementById('f-priorite');
-  if (prio && prio.value) rec.priorite = prio.value;
-  const ech = document.getElementById('f-echeance');
-  if (ech && ech.value) rec.echeance = Math.floor(new Date(ech.value).getTime() / 1000);
-
+  const nom=document.getElementById('fNom')?.value?.trim(); if(!nom){alert('Nom requis');return;}
+  const btn=document.getElementById('saveBtn'); btn.disabled=true; btn.textContent='Enregistrement…';
   try {
-    if (modalMode === 'edit' && modalItemId) {
-      await grist.docApi.applyUserActions([['UpdateRecord', 'Item', modalItemId, rec]]);
-    } else {
-      await grist.docApi.applyUserActions([['AddRecord', 'Item', null, rec]]);
+    const rec={nom,type:mType};
+    const desc=document.getElementById('fDesc'); if(desc)rec.description=desc.value;
+    const lien=document.getElementById('fLien'); if(lien)rec.lien=lien.value;
+    const dos=document.getElementById('fDos'); if(dos&&dos.value)rec.dossier=parseInt(dos.value);
+    const prio=document.getElementById('fPrio'); if(prio&&prio.value)rec.priorite=prio.value;
+    const ech=document.getElementById('fEch'); if(ech&&ech.value)rec.echeance=Math.floor(new Date(ech.value).getTime()/1000);
+
+    if (mType==='fichier') {
+      let allIds=[...mExisting];
+      for (const f of mPending) {
+        btn.textContent=`Upload: ${f.name.substring(0,30)}…`;
+        try { const ids=await uploadFile(f); allIds=allIds.concat(ids); }
+        catch(e) { console.error(e); alert(`Erreur upload "${f.name}":\n${e.message}\nL'enregistrement continue sans ce fichier.`); }
+      }
+      rec.fichier = allIds.length ? ['L',...allIds] : null;
     }
-    closeAddModal();
-    await fetchAll();
-  } catch(e) {
-    console.error(e);
-    alert('Erreur lors de l\'enregistrement : ' + e.message);
-  }
+
+    btn.textContent='Sauvegarde…';
+    if (mMode==='edit'&&mItemId) await grist.docApi.applyUserActions([['UpdateRecord','Item',mItemId,rec]]);
+    else await grist.docApi.applyUserActions([['AddRecord','Item',null,rec]]);
+    closeAddModal(); await boot();
+  } catch(e) { console.error(e); alert('Erreur: '+e.message); }
+  finally { btn.disabled=false; btn.textContent='Enregistrer'; }
 }
 
-// ── DETAIL MODAL ──
-function openDetailModal(id) {
-  const item = state.items.find(i => i.id === id);
-  if (!item) return;
-  state.detailItem = item;
-  document.getElementById('detailTitle').textContent = item.nom || 'Sans titre';
-  renderDetailBody(item);
-  document.getElementById('detailOverlay').classList.add('open');
+// ═══════════════════════════════
+//  DETAIL MODAL
+// ═══════════════════════════════
+function openDet(id) {
+  const it=S.items.find(i=>i.id===id); if(!it)return;
+  S.detailItem=it;
+  document.getElementById('detTitle').textContent=it.nom||'Sans titre';
+  rDetBody(it);
+  document.getElementById('detOv').classList.add('open');
 }
 
-function renderDetailBody(item) {
-  const d = state.dossiers.find(d => d.id === item.dossier);
-  const cat = d ? state.categories.find(c => c.nom === d.categorie || c.id === d.categorie) : null;
-  const catColor = cat ? (cat.couleur || '#9b9b97') : '#9b9b97';
-  const dateStr = item.echeance ? formatDate(item.echeance) : null;
-  const isOverdue = item.echeance && !item.termine && new Date(item.echeance * 1000) < new Date();
+function rDetBody(it) {
+  const d=S.dossiers.find(d=>d.id===it.dossier);
+  const cat=d?S.categories.find(c=>c.nom===d.categorie||c.id===d.categorie):null;
+  const cc=cat?(cat.couleur||'#9b9b97'):'#9b9b97';
+  const ds=it.echeance?fmtDate(it.echeance):null;
+  const od=it.echeance&&!it.termine&&new Date(it.echeance*1000)<new Date();
+  const aids=parseAttachIds(it.fichier);
 
-  let html = `<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px">`;
-  if (item.type) html += `<span class="card-type-badge badge-${item.type}">${item.type}</span>`;
-  if (item.priorite) html += `<span class="priority-badge priority-${item.priorite.toLowerCase()}">${item.priorite}</span>`;
-  if (dateStr) html += `<span class="task-date${isOverdue?' overdue':''}" style="font-size:12.5px">${dateStr}</span>`;
-  if (d) html += `<span class="folder-tag"><span class="folder-dot" style="background:${catColor}"></span>${escHtml(d.nom)}</span>`;
-  html += '</div>';
-
-  if (item.description) {
-    html += `<div class="detail-desc">${escHtml(stripHtml(item.description))}</div>`;
-  }
-  if (item.lien) {
-    html += `<div class="form-field">
-      <span class="form-label">Lien</span>
-      <a href="${escHtml(item.lien)}" target="_blank" class="detail-link" style="font-size:14px">${escHtml(item.lien)}</a>
-    </div>`;
-  }
-  if (item.type === 'action') {
-    html += `<div style="display:flex;align-items:center;gap:10px;margin-top:8px">
-      <div class="task-checkbox${item.termine?' checked':''}" style="cursor:pointer" onclick="toggleTask(${item.id});state.detailItem.termine=!state.detailItem.termine;renderDetailBody(state.detailItem)">
-        <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
-      </div>
-      <span style="font-size:13.5px;color:var(--text2)">${item.termine ? 'Terminée' : 'Marquer comme terminée'}</span>
-    </div>`;
-  }
-
-  document.getElementById('detailBody').innerHTML = html;
-}
-
-function closeDetailModal() {
-  document.getElementById('detailOverlay').classList.remove('open');
-}
-
-// Close modals on overlay click
-document.getElementById('addOverlay').addEventListener('click', function(e) {
-  if (e.target === this) closeAddModal();
-});
-document.getElementById('detailOverlay').addEventListener('click', function(e) {
-  if (e.target === this) closeDetailModal();
-});
-
-// ══════════════════════════════════════════════
-//  ACTIONS
-// ══════════════════════════════════════════════
-async function toggleTask(id) {
-  const item = state.items.find(i => i.id === id);
-  if (!item) return;
-  const newVal = !item.termine;
-  try {
-    await grist.docApi.applyUserActions([['UpdateRecord', 'Item', id, { termine: newVal }]]);
-    item.termine = newVal;
-    renderContent();
-  } catch(e) { console.error(e); }
-}
-
-async function deleteItem(id) {
-  if (!confirm('Supprimer cet élément ?')) return;
-  try {
-    await grist.docApi.applyUserActions([['RemoveRecord', 'Item', id]]);
-    await fetchAll();
-  } catch(e) { console.error(e); alert('Erreur : ' + e.message); }
-}
-
-// ══════════════════════════════════════════════
-//  COUNT HELPERS
-// ══════════════════════════════════════════════
-function countKnowledge(type) {
-  const items = state.items.filter(i => ['web','fichier','note'].includes(i.type));
-  return type === 'all' ? items.length : items.filter(i => i.type === type).length;
-}
-function countKnowledgeByDossier(dosId) {
-  return state.items.filter(i => ['web','fichier','note'].includes(i.type) && i.dossier === dosId).length;
-}
-function countKnowledgeByCat(cat) {
-  const dosIds = state.dossiers.filter(d => d.categorie === cat.nom || d.categorie === cat.id).map(d => d.id);
-  return state.items.filter(i => ['web','fichier','note'].includes(i.type) && dosIds.includes(i.dossier)).length;
-}
-function countTasks(type) {
-  const tasks = state.items.filter(i => i.type === 'action');
-  if (type === 'all') return tasks.length;
-  if (type === 'todo') return tasks.filter(t => !t.termine).length;
-  if (type === 'done') return tasks.filter(t => t.termine).length;
-  return 0;
-}
-function countTasksByPriority(p) {
-  return state.items.filter(i => i.type === 'action' && i.priorite === p).length;
-}
-
-// ══════════════════════════════════════════════
-//  UTILS
-// ══════════════════════════════════════════════
-function escHtml(str) {
-  if (!str) return '';
-  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-function stripHtml(str) {
-  if (!str) return '';
-  return str.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
-}
-function formatDate(ts) {
-  if (!ts) return '';
-  const d = new Date(ts * 1000);
-  return d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' });
-}
-function emptyState(title, sub) {
-  return `<div class="empty-state">
-    <svg width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M9 13h6m-3-3v6m-9 1V7a2 2 0 0 1 2-2h6l2 2h6a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2z"/></svg>
-    <span class="empty-title">${title}</span>
-    <span class="empty-sub">${sub}</span>
+  let h=`<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px">`;
+  if(it.type)h+=`<span class="tbadge t${it.type[0]}">${it.type}</span>`;
+  if(it.priorite)h+=`<span class="pbadge ${['','pc','ph','pm','pb'][['','Critique','Haute','Moyenne','Basse'].indexOf(it.priorite)]||''}">${it.priorite}</span>`;
+  if(ds)h+=`<span class="tdate${od?' od':''}" style="font-size:12.5px">${ds}</span>`;
+  if(d)h+=`<span class="ftag"><span class="fdot" style="background:${cc}"></span>${esc(d.nom)}</span>`;
+  h+='</div>';
+  if(it.description)h+=`<div class="ddesc">${esc(strip(it.description))}</div>`;
+  if(it.lien)h+=`<div class="ff"><span class="fl">Lien</span><a href="${esc(it.lien)}" target="_blank" class="dlink" style="font-size:14px">${esc(it.lien)}</a></div>`;
+  if(aids.length)h+=`<div class="ff"><span class="fl" style="margin-bottom:6px">Pièces jointes (${aids.length})</span><div id="detAList" class="alist"></div></div>`;
+  if(it.type==='action')h+=`<div style="display:flex;align-items:center;gap:10px;margin-top:8px">
+    <div class="chk ${it.termine?'checked':''}" style="cursor:pointer" onclick="toggleTask(${it.id});S.detailItem.termine=!S.detailItem.termine;rDetBody(S.detailItem)">
+      <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+    </div>
+    <span style="font-size:13.5px;color:var(--text2)">${it.termine?'Terminée':'Marquer comme terminée'}</span>
   </div>`;
+
+  document.getElementById('detBody').innerHTML=h;
+  if(aids.length) rDetAList(aids);
 }
 
-// ── SVG ICONS ──
-function svgWeb(s) {
-  return `<svg width="${s}" height="${s}" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>`;
-}
-function svgNote(s) {
-  return `<svg width="${s}" height="${s}" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>`;
-}
-function svgFile(s) {
-  return `<svg width="${s}" height="${s}" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>`;
-}
-
-// ── KEYBOARD ──
-document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') { closeAddModal(); closeDetailModal(); }
-  if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
-    if (document.getElementById('addOverlay').classList.contains('open')) saveModal();
+async function rDetAList(aids) {
+  const el=document.getElementById('detAList'); if(!el)return;
+  // Render placeholder rows
+  aids.forEach(id=>{
+    const row=document.createElement('div'); row.className='arow'; row.id='da-'+id;
+    const name=metaCache[id]?metaCache[id].fileName:`Fichier ${id}`;
+    const sz=metaCache[id]?fmtSz(metaCache[id].fileSize||0):'';
+    row.innerHTML=buildDetARow(id,name,sz);
+    el.appendChild(row);
+  });
+  // Fetch missing meta
+  const missing=aids.filter(id=>!metaCache[id]);
+  if(missing.length&&gristDocId) {
+    await Promise.all(missing.map(id=>fetchMeta(id)));
+    aids.forEach(id=>{
+      const row=document.getElementById('da-'+id);
+      if(row&&metaCache[id]){row.innerHTML=buildDetARow(id,metaCache[id].fileName||`Fichier ${id}`,fmtSz(metaCache[id].fileSize||0));}
+    });
   }
+}
+
+function buildDetARow(id,name,sz) {
+  const url=attachUrl(id);
+  return `${aIconHtml(name)}<span class="aname">${esc(name)}</span>${sz?`<span class="asize">${sz}</span>`:''}
+    <div class="aacts">
+      <button class="ibtn" title="Visualiser" onclick="prevAttach(${id},'${esc(name).replace(/'/g,"\\'")}')">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+      </button>
+      <a href="${esc(url)}" target="_blank" class="ibtn" title="Télécharger" onclick="event.stopPropagation()" style="text-decoration:none">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      </a>
+    </div>`;
+}
+
+function closeDetModal(){document.getElementById('detOv').classList.remove('open')}
+
+document.getElementById('addOv').addEventListener('click',e=>{if(e.target.id==='addOv')closeAddModal()});
+document.getElementById('detOv').addEventListener('click',e=>{if(e.target.id==='detOv')closeDetModal()});
+
+// ═══════════════════════════════
+//  PREVIEW
+// ═══════════════════════════════
+function prevAttach(id, name) {
+  const url=attachUrl(id);
+  const ext=(name.split('.').pop()||'').toLowerCase();
+  document.getElementById('prevName').textContent=name;
+  document.getElementById('prevDl').href=url;
+  const imgs=['jpg','jpeg','png','gif','webp','svg','bmp','ico'];
+  const pb=document.getElementById('prevBody');
+  if(imgs.includes(ext)) {
+    pb.innerHTML=`<img src="${esc(url)}" alt="${esc(name)}">`;
+  } else if(ext==='pdf'||ext==='txt'||ext==='csv'||ext==='md'||ext==='html'||ext==='htm') {
+    pb.innerHTML=`<iframe src="${esc(url)}" title="${esc(name)}"></iframe>`;
+  } else {
+    pb.innerHTML=`<div class="prev-unsup">
+      <svg width="52" height="52" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      <div style="font-size:15px;font-weight:500;color:rgba(255,255,255,.85);margin-bottom:6px">${esc(name)}</div>
+      <div>Aperçu non disponible pour les fichiers .${ext||'?'}</div>
+      <a href="${esc(url)}" target="_blank" class="prev-dl" style="margin-top:16px">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Télécharger le fichier
+      </a>
+    </div>`;
+  }
+  document.getElementById('prevOv').classList.add('open');
+}
+
+function closePrev() { document.getElementById('prevOv').classList.remove('open'); document.getElementById('prevBody').innerHTML=''; }
+document.getElementById('prevOv').addEventListener('click',e=>{if(e.target.id==='prevOv')closePrev()});
+
+// ═══════════════════════════════
+//  ACTIONS
+// ═══════════════════════════════
+async function toggleTask(id) {
+  const it=S.items.find(i=>i.id===id); if(!it)return;
+  const nv=!it.termine;
+  try{await grist.docApi.applyUserActions([['UpdateRecord','Item',id,{termine:nv}]]);it.termine=nv;rContent();}catch(e){console.error(e);}
+}
+
+async function delItem(id) {
+  if(!confirm('Supprimer cet élément ?'))return;
+  try{await grist.docApi.applyUserActions([['RemoveRecord','Item',id]]);await boot();}
+  catch(e){alert('Erreur: '+e.message);}
+}
+
+// ═══════════════════════════════
+//  COUNTS
+// ═══════════════════════════════
+function cntK(t){const its=S.items.filter(i=>['web','fichier','note'].includes(i.type));return t==='all'?its.length:its.filter(i=>i.type===t).length}
+function cntKDos(id){return S.items.filter(i=>['web','fichier','note'].includes(i.type)&&i.dossier===id).length}
+function cntKCat(cat){const ids=S.dossiers.filter(d=>d.categorie===cat.nom||d.categorie===cat.id).map(d=>d.id);return S.items.filter(i=>['web','fichier','note'].includes(i.type)&&ids.includes(i.dossier)).length}
+function cntTask(t){const ts=S.items.filter(i=>i.type==='action');if(t==='all')return ts.length;if(t==='todo')return ts.filter(i=>!i.termine).length;if(t==='done')return ts.filter(i=>i.termine).length;return 0}
+function cntTaskP(p){return S.items.filter(i=>i.type==='action'&&i.priorite===p).length}
+
+// ═══════════════════════════════
+//  UTILS
+// ═══════════════════════════════
+function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+function strip(s){return s?s.replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim():''}
+function fmtDate(ts){return new Date(ts*1000).toLocaleDateString('fr-FR',{day:'2-digit',month:'short',year:'numeric'})}
+function fmtSz(b){if(!b)return'';if(b<1024)return b+' o';if(b<1048576)return Math.round(b/1024)+' Ko';return(b/1048576).toFixed(1)+' Mo'}
+function emptyEl(t,s){return`<div class="empty"><svg width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" style="opacity:.4"><path d="M9 13h6m-3-3v6m-9 1V7a2 2 0 0 1 2-2h6l2 2h6a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2z"/></svg><span class="etitle">${t}</span><span class="esub">${s}</span></div>`}
+
+// Attachment icon by extension
+function aIconHtml(name) {
+  const ext=(name.split('.').pop()||'').toLowerCase();
+  let bg='#f0fdf4',co='#16a34a',ic=iFile(14);
+  if(['jpg','jpeg','png','gif','webp','svg'].includes(ext)){bg='#eff6ff';co='#2563eb';ic=`<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>`;}
+  else if(ext==='pdf'){bg='#fde8e8';co='#c53030';ic=`<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="15" x2="15" y2="15"/></svg>`;}
+  else if(['doc','docx'].includes(ext)){bg='#eff6ff';co='#2563eb';}
+  else if(['xls','xlsx'].includes(ext)){bg='#f0fdf4';co='#16a34a';}
+  else if(['ppt','pptx'].includes(ext)){bg='#fef3e2';co='#c05621';}
+  return `<div class="aicon" style="background:${bg};color:${co}">${ic}</div>`;
+}
+
+// SVG Icons
+function iWeb(s){return`<svg width="${s}" height="${s}" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>`}
+function iNote(s){return`<svg width="${s}" height="${s}" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>`}
+function iFile(s){return`<svg width="${s}" height="${s}" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>`}
+function iAttach(s){return`<svg width="${s}" height="${s}" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>`}
+function iEdit(){return`<svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`}
+function iDel(){return`<svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>`}
+
+// Keyboard shortcuts
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){
+    if(document.getElementById('prevOv').classList.contains('open')){closePrev();return}
+    closeAddModal();closeDetModal();
+  }
+  if((e.metaKey||e.ctrlKey)&&e.key==='Enter'&&document.getElementById('addOv').classList.contains('open'))saveModal();
 });
 </script>
 </body>
