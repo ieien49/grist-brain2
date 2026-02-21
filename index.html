@@ -270,6 +270,11 @@
 
 <script>
 // ═══════════════════════════════
+//  GRIST READY — doit être appelé EN PREMIER
+// ═══════════════════════════════
+grist.ready({ requiredAccess: 'full', columns: [] });
+
+// ═══════════════════════════════
 //  STATE
 // ═══════════════════════════════
 const S = {
@@ -278,70 +283,60 @@ const S = {
   search:'', groupBy:'dossier', viewMode:'list', detailItem:null
 };
 
-// gristOrigin = server host, gristDocId = full document ID
 let gristOrigin = window.location.origin;
 let gristDocId = null;
 const metaCache = {};
 
-// Resolve the full docId by calling GET /api/docs/{slug} via fetch
-// Your instance URL pattern: https://host/o/org/slug/
+// Resolve docId from referrer URL
 async function resolveDocId() {
-  // 1. Try referrer URL which contains the page with the widget
   const ref = document.referrer || '';
-  if (ref) {
-    // Pattern /o/{org}/{slug}/ → call /api/docs/{slug} to get the real id
-    const m = ref.match(/(https?:\/\/[^\/]+)(?:\/o\/[^\/]+)?\/([^\/\?#]+)/);
-    if (m) {
-      gristOrigin = m[1];
-      const slug = m[2];
-      try {
-        const r = await fetch(`${gristOrigin}/api/docs/${slug}`, { credentials: 'include' });
-        if (r.ok) {
-          const doc = await r.json();
-          if (doc && doc.id) { gristDocId = doc.id; console.log('[SecondBrain] docId resolved:', gristDocId); return; }
-        }
-      } catch(e) { console.warn('[SecondBrain] resolveDocId fetch failed:', e); }
-      // Fallback: use slug as-is (works when slug === id)
-      gristDocId = slug;
-      console.log('[SecondBrain] docId fallback to slug:', gristDocId);
-    }
-  }
-  // 2. Try ancestorOrigins (iframe context)
-  if (!gristDocId && window.location.ancestorOrigins && window.location.ancestorOrigins[0]) {
-    gristOrigin = window.location.ancestorOrigins[0];
-  }
+  const origin = ref.match(/^(https?:\/\/[^\/]+)/)?.[1] || window.location.origin;
+  gristOrigin = origin;
+  const slug = ref.replace(/\/p\/\d+.*/, '').split('/').filter(Boolean).pop();
+  if (!slug) return;
+  try {
+    const r = await fetch(`${gristOrigin}/api/docs/${slug}`, { credentials: 'include' });
+    if (r.ok) { const d = await r.json(); if (d && d.id) { gristDocId = d.id; return; } }
+  } catch(e) {}
+  gristDocId = slug;
 }
 
+window.addEventListener('message', function(evt) {
+  try {
+    const d = typeof evt.data === 'string' ? JSON.parse(evt.data) : evt.data;
+    if (d && d.docId && !gristDocId) { gristDocId = d.docId; if (evt.origin && evt.origin !== 'null') gristOrigin = evt.origin; }
+  } catch(e) {}
+});
+
+let booted = false;
 async function boot() {
-  await resolveDocId();
+  if (booted) return; booted = true;
+  resolveDocId(); // fire and forget — needed only for attachment API
   try {
     const [items, dossiers, cats] = await Promise.all([
       grist.docApi.fetchTable('Item'),
       grist.docApi.fetchTable('Dossier'),
       grist.docApi.fetchTable('Categorie'),
     ]);
-    S.items = toRecs(items); S.dossiers = toRecs(dossiers); S.categories = toRecs(cats);
+    S.items = toRecs(items);
+    S.dossiers = toRecs(dossiers);
+    S.categories = toRecs(cats);
     render();
   } catch(e) {
-    console.error('boot error:', e);
-    document.getElementById('content').innerHTML = `<div class="empty"><span class="etitle">Erreur de chargement</span><span class="esub">${e.message}</span></div>`;
+    console.error('[SecondBrain] boot error:', e);
+    document.getElementById('content').innerHTML =
+      `<div class="empty"><span class="etitle">Erreur de chargement</span><span class="esub">${e.message}</span></div>`;
   }
 }
 
-// Also capture docId from Grist beat postMessage as backup
-window.addEventListener('message', function(evt) {
-  try {
-    const data = typeof evt.data === 'string' ? JSON.parse(evt.data) : evt.data;
-    if (data && data.docId && !gristDocId) {
-      gristDocId = data.docId;
-      if (evt.origin && evt.origin !== 'null') gristOrigin = evt.origin;
-      console.log('[SecondBrain] docId from postMessage:', gristDocId);
-    }
-  } catch(e) {}
+// onRecords se déclenche quand Grist a terminé le handshake et est prêt
+grist.onRecords(function(_records, _mappings) {
+  boot();
 });
 
-grist.onRecords(function() {}); // trigger connection handshake
-setTimeout(boot, 400);
+// Fallback : si onRecords ne se déclenche pas (widget non lié à une table),
+// on démarre quand même après un court délai
+setTimeout(function() { boot(); }, 1500);
 
 function toRecs(t) {
   if (!t || !t.id) return [];
