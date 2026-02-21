@@ -1,0 +1,1158 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Second Brain</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+<script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
+<style>
+  :root {
+    --bg: #ffffff;
+    --bg2: #f9f9f8;
+    --bg3: #f1f1ef;
+    --border: #e8e8e5;
+    --border2: #d3d3ce;
+    --text: #191919;
+    --text2: #5a5a57;
+    --text3: #9b9b97;
+    --accent: #2d6adf;
+    --accent-light: #eff4ff;
+    --red: #eb5757;
+    --orange: #f1a349;
+    --yellow: #f5c341;
+    --green: #5da377;
+    --radius: 8px;
+    --radius-lg: 12px;
+    --shadow: 0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
+    --shadow-md: 0 4px 16px rgba(0,0,0,.08), 0 2px 6px rgba(0,0,0,.04);
+    --shadow-lg: 0 12px 40px rgba(0,0,0,.12), 0 4px 12px rgba(0,0,0,.06);
+    --transition: .18s cubic-bezier(.4,0,.2,1);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    color: var(--text);
+    background: var(--bg);
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* ── TOPBAR ── */
+  .topbar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg);
+    flex-shrink: 0;
+  }
+  .topbar-logo {
+    font-family: 'DM Serif Display', serif;
+    font-size: 17px;
+    color: var(--text);
+    letter-spacing: -.3px;
+    margin-right: 4px;
+  }
+  .topbar-sep { width: 1px; height: 18px; background: var(--border2); margin: 0 4px; }
+  .tab-btn {
+    display: flex; align-items: center; gap: 6px;
+    padding: 6px 12px; border-radius: 6px; border: none; background: transparent;
+    cursor: pointer; font-family: inherit; font-size: 13.5px; color: var(--text2);
+    font-weight: 500; transition: background var(--transition), color var(--transition);
+  }
+  .tab-btn:hover { background: var(--bg3); color: var(--text); }
+  .tab-btn.active { background: var(--bg3); color: var(--text); }
+  .tab-btn svg { opacity: .7; }
+  .spacer { flex: 1; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 7px 14px; border-radius: var(--radius); border: none;
+    cursor: pointer; font-family: inherit; font-size: 13.5px; font-weight: 500;
+    transition: all var(--transition);
+  }
+  .btn-primary { background: var(--text); color: #fff; }
+  .btn-primary:hover { background: #333; }
+  .btn-ghost { background: transparent; color: var(--text2); border: 1px solid var(--border2); }
+  .btn-ghost:hover { background: var(--bg3); color: var(--text); }
+  .btn-sm { padding: 5px 10px; font-size: 12.5px; }
+
+  /* ── LAYOUT ── */
+  .layout {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    width: 220px;
+    flex-shrink: 0;
+    border-right: 1px solid var(--border);
+    padding: 12px 8px;
+    overflow-y: auto;
+    background: var(--bg2);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .sidebar-section-title {
+    font-size: 11px; font-weight: 600; color: var(--text3);
+    text-transform: uppercase; letter-spacing: .06em;
+    padding: 8px 8px 4px;
+  }
+  .sidebar-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 8px; border-radius: 6px;
+    cursor: pointer; color: var(--text2); font-size: 13.5px;
+    transition: background var(--transition), color var(--transition);
+    user-select: none;
+  }
+  .sidebar-item:hover { background: var(--border); color: var(--text); }
+  .sidebar-item.active { background: var(--border); color: var(--text); font-weight: 500; }
+  .sidebar-dot {
+    width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+  }
+  .sidebar-count {
+    margin-left: auto; font-size: 11px; color: var(--text3);
+    background: var(--border); padding: 1px 6px; border-radius: 20px;
+  }
+  .sidebar-divider { height: 1px; background: var(--border); margin: 6px 8px; }
+
+  /* ── MAIN ── */
+  .main {
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── TOOLBAR ── */
+  .toolbar {
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 16px; border-bottom: 1px solid var(--border);
+    flex-shrink: 0; background: var(--bg);
+  }
+  .toolbar-title { font-size: 15px; font-weight: 600; color: var(--text); }
+  .filter-group { display: flex; gap: 4px; margin-left: 8px; }
+  .filter-chip {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 4px 10px; border-radius: 20px; border: 1px solid var(--border2);
+    background: var(--bg); color: var(--text2); font-size: 12.5px; font-weight: 500;
+    cursor: pointer; transition: all var(--transition);
+  }
+  .filter-chip:hover { border-color: var(--text3); color: var(--text); }
+  .filter-chip.active { background: var(--text); color: #fff; border-color: var(--text); }
+  .search-wrap { position: relative; margin-left: auto; }
+  .search-wrap input {
+    padding: 6px 10px 6px 32px; border-radius: 6px; border: 1px solid var(--border2);
+    font-family: inherit; font-size: 13px; color: var(--text); background: var(--bg2);
+    width: 200px; outline: none; transition: all var(--transition);
+  }
+  .search-wrap input:focus { border-color: var(--accent); background: var(--bg); width: 240px; }
+  .search-wrap svg { position: absolute; left: 8px; top: 50%; transform: translateY(-50%); color: var(--text3); pointer-events: none; }
+
+  /* ── CONTENT ── */
+  .content {
+    flex: 1; overflow-y: auto; padding: 16px;
+  }
+
+  /* ── TASK VIEW ── */
+  .task-group { margin-bottom: 24px; }
+  .task-group-header {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 12px; font-weight: 600; color: var(--text3);
+    text-transform: uppercase; letter-spacing: .06em;
+    margin-bottom: 8px; padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  .task-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 12px; border-radius: var(--radius);
+    border: 1px solid transparent;
+    transition: all var(--transition); cursor: pointer;
+    margin-bottom: 2px;
+  }
+  .task-item:hover { background: var(--bg2); border-color: var(--border); }
+  .task-item.done { opacity: .5; }
+  .task-checkbox {
+    width: 16px; height: 16px; border-radius: 4px; border: 1.5px solid var(--border2);
+    flex-shrink: 0; cursor: pointer; display: flex; align-items: center; justify-content: center;
+    transition: all var(--transition); background: var(--bg);
+  }
+  .task-checkbox:hover { border-color: var(--accent); }
+  .task-checkbox.checked { background: var(--green); border-color: var(--green); }
+  .task-checkbox.checked svg { display: block; }
+  .task-checkbox svg { display: none; color: white; }
+  .task-name { flex: 1; font-size: 14px; color: var(--text); }
+  .task-item.done .task-name { text-decoration: line-through; color: var(--text3); }
+  .task-meta { display: flex; align-items: center; gap: 8px; }
+  .priority-badge {
+    font-size: 11px; font-weight: 600; padding: 2px 7px; border-radius: 4px;
+    letter-spacing: .03em;
+  }
+  .priority-critique { background: #fde8e8; color: #c53030; }
+  .priority-haute { background: #fef3e2; color: #c05621; }
+  .priority-moyenne { background: #fefce8; color: #92400e; }
+  .priority-basse { background: #f0fdf4; color: #276749; }
+  .task-date { font-size: 12px; color: var(--text3); }
+  .task-date.overdue { color: var(--red); font-weight: 500; }
+  .task-actions { display: flex; gap: 4px; opacity: 0; transition: opacity var(--transition); }
+  .task-item:hover .task-actions { opacity: 1; }
+  .icon-btn {
+    width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;
+    border-radius: 5px; border: none; background: transparent; cursor: pointer; color: var(--text3);
+    transition: all var(--transition);
+  }
+  .icon-btn:hover { background: var(--border); color: var(--text); }
+
+  /* ── KNOWLEDGE GRID ── */
+  .knowledge-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 12px;
+  }
+  .knowledge-card {
+    border: 1px solid var(--border); border-radius: var(--radius-lg);
+    padding: 14px 16px; background: var(--bg);
+    cursor: pointer; transition: all var(--transition);
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .knowledge-card:hover {
+    border-color: var(--border2); box-shadow: var(--shadow-md);
+    transform: translateY(-1px);
+  }
+  .card-header { display: flex; align-items: flex-start; gap: 10px; }
+  .card-icon {
+    width: 34px; height: 34px; border-radius: 8px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .card-icon-web { background: #eff6ff; color: #2563eb; }
+  .card-icon-fichier { background: #f0fdf4; color: #16a34a; }
+  .card-icon-note { background: #fefce8; color: #ca8a04; }
+  .card-title { font-size: 14px; font-weight: 600; color: var(--text); line-height: 1.4; flex: 1; }
+  .card-desc {
+    font-size: 13px; color: var(--text2); line-height: 1.5;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .card-footer { display: flex; align-items: center; gap: 6px; margin-top: 4px; }
+  .folder-tag {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 11.5px; font-weight: 500; padding: 2px 8px; border-radius: 4px;
+    background: var(--bg3); color: var(--text2);
+  }
+  .folder-dot { width: 6px; height: 6px; border-radius: 50%; }
+  .card-type-badge {
+    font-size: 11px; font-weight: 600; padding: 2px 6px; border-radius: 4px;
+    margin-left: auto; text-transform: uppercase; letter-spacing: .04em;
+  }
+  .badge-web { background: #eff6ff; color: #2563eb; }
+  .badge-fichier { background: #f0fdf4; color: #16a34a; }
+  .badge-note { background: #fefce8; color: #ca8a04; }
+
+  /* ── MODAL ── */
+  .overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,.25);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 1000; opacity: 0; pointer-events: none;
+    transition: opacity var(--transition);
+    backdrop-filter: blur(2px);
+  }
+  .overlay.open { opacity: 1; pointer-events: all; }
+  .modal {
+    background: var(--bg); border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    width: 520px; max-width: calc(100vw - 32px); max-height: calc(100vh - 64px);
+    overflow-y: auto;
+    transform: translateY(12px) scale(.98);
+    transition: transform var(--transition);
+  }
+  .overlay.open .modal { transform: translateY(0) scale(1); }
+  .modal-header {
+    display: flex; align-items: center; padding: 18px 20px 14px;
+    border-bottom: 1px solid var(--border); gap: 10px;
+  }
+  .modal-title { font-size: 16px; font-weight: 600; flex: 1; }
+  .modal-body { padding: 16px 20px; display: flex; flex-direction: column; gap: 14px; }
+  .modal-footer {
+    display: flex; justify-content: flex-end; gap: 8px;
+    padding: 14px 20px; border-top: 1px solid var(--border);
+  }
+  .form-field { display: flex; flex-direction: column; gap: 5px; }
+  .form-label { font-size: 12.5px; font-weight: 600; color: var(--text2); }
+  .form-input, .form-select, .form-textarea {
+    padding: 8px 10px; border-radius: var(--radius); border: 1.5px solid var(--border2);
+    font-family: inherit; font-size: 14px; color: var(--text); background: var(--bg);
+    outline: none; transition: border-color var(--transition);
+  }
+  .form-input:focus, .form-select:focus, .form-textarea:focus {
+    border-color: var(--accent);
+  }
+  .form-textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
+  .type-selector { display: flex; gap: 6px; }
+  .type-btn {
+    flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px;
+    padding: 10px 8px; border-radius: var(--radius); border: 1.5px solid var(--border2);
+    cursor: pointer; background: var(--bg); transition: all var(--transition);
+    font-family: inherit; font-size: 12px; font-weight: 500; color: var(--text2);
+  }
+  .type-btn:hover { border-color: var(--border2); background: var(--bg2); }
+  .type-btn.active { border-color: var(--accent); background: var(--accent-light); color: var(--accent); }
+  .type-btn svg { opacity: .8; }
+
+  /* ── EMPTY STATE ── */
+  .empty-state {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 12px; padding: 60px 20px; color: var(--text3);
+    text-align: center;
+  }
+  .empty-state svg { opacity: .4; }
+  .empty-title { font-size: 15px; font-weight: 500; color: var(--text2); }
+  .empty-sub { font-size: 13px; }
+
+  /* ── DETAIL MODAL ── */
+  .detail-link { color: var(--accent); text-decoration: none; }
+  .detail-link:hover { text-decoration: underline; }
+  .detail-desc {
+    font-size: 14px; color: var(--text2); line-height: 1.6;
+    background: var(--bg2); padding: 10px 12px; border-radius: var(--radius);
+  }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+  .loading {
+    display: flex; align-items: center; justify-content: center;
+    height: 100%; color: var(--text3); gap: 8px; font-size: 14px;
+  }
+
+  .group-label {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 13px; font-weight: 600; color: var(--text2);
+    padding: 12px 0 8px; margin-top: 8px;
+  }
+  .group-label:first-child { margin-top: 0; }
+  .group-label-dot { width: 8px; height: 8px; border-radius: 50%; }
+
+  .task-section-add {
+    display: flex; align-items: center; gap: 6px;
+    padding: 7px 12px; border-radius: var(--radius);
+    color: var(--text3); font-size: 13px;
+    cursor: pointer; margin-top: 4px;
+    transition: all var(--transition); width: fit-content;
+  }
+  .task-section-add:hover { background: var(--bg2); color: var(--text2); }
+
+  .inline-form {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 12px; border-radius: var(--radius);
+    border: 1.5px solid var(--accent); background: var(--accent-light);
+    margin-top: 4px;
+  }
+  .inline-form input {
+    flex: 1; border: none; background: transparent; font-family: inherit;
+    font-size: 14px; color: var(--text); outline: none;
+  }
+  .inline-form select {
+    border: 1px solid var(--border2); border-radius: 5px; background: var(--bg);
+    font-family: inherit; font-size: 12.5px; color: var(--text2); padding: 3px 6px;
+    outline: none;
+  }
+  .inline-form input[type="date"] {
+    border: 1px solid var(--border2); border-radius: 5px; background: var(--bg);
+    font-family: inherit; font-size: 12.5px; color: var(--text2); padding: 3px 6px;
+  }
+
+  .tooltip {
+    position: relative;
+  }
+  .tooltip::after {
+    content: attr(data-tip);
+    position: absolute; bottom: calc(100% + 4px); left: 50%; transform: translateX(-50%);
+    background: #333; color: #fff; font-size: 11px; padding: 3px 7px; border-radius: 4px;
+    white-space: nowrap; pointer-events: none; opacity: 0; transition: opacity .15s;
+  }
+  .tooltip:hover::after { opacity: 1; }
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <span class="topbar-logo">Second Brain</span>
+  <div class="topbar-sep"></div>
+  <button class="tab-btn active" id="tab-knowledge" onclick="switchTab('knowledge')">
+    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+    Connaissances
+  </button>
+  <button class="tab-btn" id="tab-tasks" onclick="switchTab('tasks')">
+    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+    Tâches
+  </button>
+  <div class="spacer"></div>
+  <button class="btn btn-primary btn-sm" onclick="openAddModal()">
+    <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    Ajouter
+  </button>
+</div>
+
+<!-- LAYOUT -->
+<div class="layout">
+  <!-- SIDEBAR -->
+  <div class="sidebar" id="sidebar">
+    <!-- filled by JS -->
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="toolbar" id="toolbar">
+      <!-- filled by JS -->
+    </div>
+    <div class="content" id="content">
+      <div class="loading">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="animation:spin 1s linear infinite"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+        Chargement…
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ADD/EDIT MODAL -->
+<div class="overlay" id="addOverlay">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="modalTitle">Ajouter</span>
+      <button class="icon-btn" onclick="closeAddModal()">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeAddModal()">Annuler</button>
+      <button class="btn btn-primary" id="modalSaveBtn" onclick="saveModal()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- DETAIL MODAL -->
+<div class="overlay" id="detailOverlay">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="detailTitle"></span>
+      <div style="display:flex;gap:6px;margin-left:auto">
+        <button class="btn btn-ghost btn-sm" id="detailEditBtn" onclick="editFromDetail()">
+          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          Modifier
+        </button>
+        <button class="icon-btn" onclick="closeDetailModal()">
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="modal-body" id="detailBody"></div>
+  </div>
+</div>
+
+<style>
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
+
+<script>
+// ══════════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════════
+let state = {
+  tab: 'knowledge',        // 'knowledge' | 'tasks'
+  items: [],
+  dossiers: [],
+  categories: [],
+  filterType: 'all',       // knowledge: 'all'|'web'|'fichier'|'note' / tasks: 'all'|'todo'|'done'
+  filterDossier: null,
+  filterPriority: null,
+  search: '',
+  groupBy: 'dossier',      // 'dossier' | 'type' | 'categorie' | 'none'
+  editingItem: null,
+  detailItem: null,
+};
+
+// ══════════════════════════════════════════════
+//  GRIST INIT
+// ══════════════════════════════════════════════
+grist.ready({ requiredAccess: 'full', columns: [] });
+
+grist.onRecords((records, mappings) => {
+  // Detect which table by columns present
+  if (!records || !records.length) return;
+  const cols = Object.keys(records[0]);
+  if (cols.includes('echeance') || cols.includes('type') && cols.includes('dossier')) {
+    state.items = records;
+    render();
+  } else if (cols.includes('categorie')) {
+    state.dossiers = records;
+    render();
+  } else if (cols.includes('couleur')) {
+    state.categories = records;
+    render();
+  }
+});
+
+// Fetch all tables we need
+async function fetchAll() {
+  try {
+    // We use grist.docApi to fetch multiple tables
+    const [items, dossiers, categories] = await Promise.all([
+      grist.docApi.fetchTable('Item'),
+      grist.docApi.fetchTable('Dossier'),
+      grist.docApi.fetchTable('Categorie'),
+    ]);
+    state.items = tableToRecords(items);
+    state.dossiers = tableToRecords(dossiers);
+    state.categories = tableToRecords(categories);
+    render();
+  } catch(e) {
+    // fallback: widget is attached to a single table, use onRecords
+    console.log('Multi-table fetch not available, using onRecords', e);
+  }
+}
+
+function tableToRecords(tableData) {
+  if (!tableData || !tableData.id) return [];
+  const ids = tableData.id;
+  const colNames = Object.keys(tableData).filter(k => k !== 'id');
+  return ids.map((id, i) => {
+    const rec = { id };
+    colNames.forEach(col => { rec[col] = tableData[col][i]; });
+    return rec;
+  });
+}
+
+fetchAll();
+
+// ══════════════════════════════════════════════
+//  TAB SWITCH
+// ══════════════════════════════════════════════
+function switchTab(tab) {
+  state.tab = tab;
+  state.filterType = 'all';
+  state.filterDossier = null;
+  state.filterPriority = null;
+  state.search = '';
+  document.getElementById('tab-knowledge').classList.toggle('active', tab === 'knowledge');
+  document.getElementById('tab-tasks').classList.toggle('active', tab === 'tasks');
+  render();
+}
+
+// ══════════════════════════════════════════════
+//  RENDER ORCHESTRATOR
+// ══════════════════════════════════════════════
+function render() {
+  renderSidebar();
+  renderToolbar();
+  renderContent();
+}
+
+// ══════════════════════════════════════════════
+//  SIDEBAR
+// ══════════════════════════════════════════════
+function renderSidebar() {
+  const sb = document.getElementById('sidebar');
+
+  if (state.tab === 'tasks') {
+    sb.innerHTML = `
+      <div class="sidebar-section-title">Filtres</div>
+      ${sidebarItem('all-tasks', null, 'Toutes les tâches', countTasks('all'))}
+      ${sidebarItem('todo', null, 'À faire', countTasks('todo'))}
+      ${sidebarItem('done', null, 'Terminées', countTasks('done'))}
+      <div class="sidebar-divider"></div>
+      <div class="sidebar-section-title">Priorité</div>
+      ${sidebarItem('p-critique', '#ef4444', 'Critique', countTasksByPriority('Critique'))}
+      ${sidebarItem('p-haute', '#f97316', 'Haute', countTasksByPriority('Haute'))}
+      ${sidebarItem('p-moyenne', '#eab308', 'Moyenne', countTasksByPriority('Moyenne'))}
+      ${sidebarItem('p-basse', '#22c55e', 'Basse', countTasksByPriority('Basse'))}
+    `;
+    return;
+  }
+
+  // Knowledge sidebar: Catégories + Dossiers
+  const cats = state.categories;
+  const inboxCats = cats.filter(c => c.type === 'Inbox');
+  const domainCats = cats.filter(c => c.type === 'Domaine');
+  const resourceCats = cats.filter(c => c.type === 'Ressource');
+
+  let html = `
+    <div class="sidebar-section-title">Vue</div>
+    ${sidebarItem('all', null, 'Tout', countKnowledge('all'))}
+    <div class="sidebar-divider"></div>
+  `;
+
+  const renderCatGroup = (cats, label) => {
+    if (!cats.length) return '';
+    let out = `<div class="sidebar-section-title">${label}</div>`;
+    cats.forEach(cat => {
+      const color = cat.couleur || '#9b9b97';
+      const dossiersInCat = state.dossiers.filter(d => d.categorie === cat.nom || d.categorie === cat.id);
+      out += `<div class="sidebar-item${state.filterDossier === 'cat:'+cat.id ? ' active' : ''}" onclick="filterByCat(${cat.id})">
+        <span class="sidebar-dot" style="background:${color}"></span>
+        <span>${cat.nom}</span>
+        <span class="sidebar-count">${countKnowledgeByCat(cat)}</span>
+      </div>`;
+      dossiersInCat.forEach(d => {
+        out += `<div class="sidebar-item${state.filterDossier === d.id ? ' active' : ''}" onclick="filterByDossier(${d.id})" style="padding-left:22px">
+          <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+          <span>${d.nom}</span>
+          <span class="sidebar-count">${countKnowledgeByDossier(d.id)}</span>
+        </div>`;
+      });
+    });
+    return out + '<div class="sidebar-divider"></div>';
+  };
+
+  if (inboxCats.length) html += renderCatGroup(inboxCats, 'Inbox');
+  if (domainCats.length) html += renderCatGroup(domainCats, 'Domaines');
+  if (resourceCats.length) html += renderCatGroup(resourceCats, 'Ressources');
+
+  sb.innerHTML = html;
+}
+
+function sidebarItem(id, color, label, count) {
+  const isActive = (id === 'all' && !state.filterDossier && state.filterType === 'all')
+    || (id === 'all-tasks' && state.filterType === 'all' && !state.filterPriority)
+    || (id === 'todo' && state.filterType === 'todo')
+    || (id === 'done' && state.filterType === 'done')
+    || (id.startsWith('p-') && state.filterPriority === label);
+
+  const onClick = id === 'all' ? "filterAll()"
+    : id === 'all-tasks' ? "filterTaskAll()"
+    : id === 'todo' ? "filterTaskStatus('todo')"
+    : id === 'done' ? "filterTaskStatus('done')"
+    : id.startsWith('p-') ? `filterTaskPriority('${label}')`
+    : '';
+
+  return `<div class="sidebar-item${isActive ? ' active' : ''}" onclick="${onClick}">
+    ${color ? `<span class="sidebar-dot" style="background:${color}"></span>` : `<span style="width:8px"></span>`}
+    <span>${label}</span>
+    <span class="sidebar-count">${count}</span>
+  </div>`;
+}
+
+function filterAll() { state.filterDossier = null; state.filterType = 'all'; render(); }
+function filterByCat(id) { state.filterDossier = 'cat:'+id; render(); }
+function filterByDossier(id) { state.filterDossier = id; render(); }
+function filterTaskAll() { state.filterType = 'all'; state.filterPriority = null; render(); }
+function filterTaskStatus(s) { state.filterType = s; state.filterPriority = null; render(); }
+function filterTaskPriority(p) { state.filterPriority = p; state.filterType = 'all'; render(); }
+
+// ══════════════════════════════════════════════
+//  TOOLBAR
+// ══════════════════════════════════════════════
+function renderToolbar() {
+  const tb = document.getElementById('toolbar');
+
+  if (state.tab === 'tasks') {
+    tb.innerHTML = `
+      <span class="toolbar-title">Tâches</span>
+      <div class="filter-group">
+        <span class="filter-chip${state.filterType==='all'?' active':''}" onclick="filterTaskAll()">Toutes</span>
+        <span class="filter-chip${state.filterType==='todo'?' active':''}" onclick="filterTaskStatus('todo')">À faire</span>
+        <span class="filter-chip${state.filterType==='done'?' active':''}" onclick="filterTaskStatus('done')">Terminées</span>
+      </div>
+      <div class="spacer"></div>
+      <div class="search-wrap">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" placeholder="Rechercher…" value="${escHtml(state.search)}" oninput="onSearch(this.value)">
+      </div>
+    `;
+    return;
+  }
+
+  tb.innerHTML = `
+    <span class="toolbar-title">Connaissances</span>
+    <div class="filter-group">
+      <span class="filter-chip${state.filterType==='all'?' active':''}" onclick="setKnowledgeType('all')">Tout</span>
+      <span class="filter-chip${state.filterType==='web'?' active':''}" onclick="setKnowledgeType('web')">
+        ${svgWeb(12)} Web
+      </span>
+      <span class="filter-chip${state.filterType==='note'?' active':''}" onclick="setKnowledgeType('note')">
+        ${svgNote(12)} Notes
+      </span>
+      <span class="filter-chip${state.filterType==='fichier'?' active':''}" onclick="setKnowledgeType('fichier')">
+        ${svgFile(12)} Fichiers
+      </span>
+    </div>
+    <div class="spacer"></div>
+    <select style="padding:5px 8px;border-radius:6px;border:1px solid var(--border2);font-family:inherit;font-size:12.5px;color:var(--text2);background:var(--bg2);outline:none" onchange="state.groupBy=this.value;render()">
+      <option value="dossier"${state.groupBy==='dossier'?' selected':''}>Par dossier</option>
+      <option value="type"${state.groupBy==='type'?' selected':''}>Par type</option>
+      <option value="categorie"${state.groupBy==='categorie'?' selected':''}>Par catégorie</option>
+      <option value="none"${state.groupBy==='none'?' selected':''}>Sans groupe</option>
+    </select>
+    <div class="search-wrap">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" placeholder="Rechercher…" value="${escHtml(state.search)}" oninput="onSearch(this.value)">
+    </div>
+  `;
+}
+
+function setKnowledgeType(t) { state.filterType = t; render(); }
+function onSearch(v) { state.search = v; renderContent(); }
+
+// ══════════════════════════════════════════════
+//  CONTENT
+// ══════════════════════════════════════════════
+function renderContent() {
+  const el = document.getElementById('content');
+  if (state.tab === 'tasks') {
+    el.innerHTML = renderTasks();
+  } else {
+    el.innerHTML = renderKnowledge();
+  }
+}
+
+// ── TASKS ──
+function renderTasks() {
+  let tasks = state.items.filter(i => i.type === 'action');
+  if (state.filterType === 'todo') tasks = tasks.filter(i => !i.termine);
+  else if (state.filterType === 'done') tasks = tasks.filter(i => i.termine);
+  if (state.filterPriority) tasks = tasks.filter(i => i.priorite === state.filterPriority);
+  if (state.search) tasks = tasks.filter(i => (i.nom||'').toLowerCase().includes(state.search.toLowerCase()));
+
+  if (!tasks.length) return emptyState('Aucune tâche', 'Ajoutez votre première tâche avec le bouton « Ajouter »');
+
+  // Group by priority
+  const groups = [
+    { key: 'Critique', label: 'Critique', color: '#ef4444' },
+    { key: 'Haute', label: 'Haute', color: '#f97316' },
+    { key: 'Moyenne', label: 'Moyenne', color: '#eab308' },
+    { key: 'Basse', label: 'Basse', color: '#22c55e' },
+    { key: null, label: 'Sans priorité', color: '#9b9b97' },
+  ];
+
+  let html = '';
+  groups.forEach(g => {
+    const items = tasks.filter(t => (t.priorite || null) === g.key);
+    if (!items.length) return;
+    html += `<div class="task-group">
+      <div class="task-group-header">
+        <span style="width:8px;height:8px;border-radius:50%;background:${g.color};display:inline-block"></span>
+        ${g.label} <span style="color:var(--text3);font-weight:400">(${items.length})</span>
+      </div>`;
+    items.forEach(t => { html += taskItem(t); });
+    html += `</div>`;
+  });
+
+  return html + `<div class="task-section-add" onclick="openAddModal('action')">
+    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    Ajouter une tâche
+  </div>`;
+}
+
+function taskItem(t) {
+  const checked = t.termine ? 'checked' : '';
+  const done = t.termine ? 'done' : '';
+  const pClass = t.priorite ? `priority-${t.priorite.toLowerCase()}` : '';
+  const dateStr = t.echeance ? formatDate(t.echeance) : '';
+  const isOverdue = t.echeance && !t.termine && new Date(t.echeance * 1000) < new Date();
+
+  return `<div class="task-item ${done}" onclick="openDetailModal(${t.id})">
+    <div class="task-checkbox ${checked}" onclick="event.stopPropagation();toggleTask(${t.id})">
+      <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+    </div>
+    <span class="task-name">${escHtml(t.nom || 'Sans titre')}</span>
+    <div class="task-meta">
+      ${t.priorite ? `<span class="priority-badge ${pClass}">${t.priorite}</span>` : ''}
+      ${dateStr ? `<span class="task-date${isOverdue?' overdue':''}">${dateStr}</span>` : ''}
+    </div>
+    <div class="task-actions">
+      <button class="icon-btn tooltip" data-tip="Modifier" onclick="event.stopPropagation();openEditModal(${t.id})">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+      </button>
+      <button class="icon-btn tooltip" data-tip="Supprimer" onclick="event.stopPropagation();deleteItem(${t.id})">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+      </button>
+    </div>
+  </div>`;
+}
+
+// ── KNOWLEDGE ──
+function renderKnowledge() {
+  let items = state.items.filter(i => ['web','fichier','note'].includes(i.type));
+
+  if (state.filterType !== 'all') items = items.filter(i => i.type === state.filterType);
+  if (state.filterDossier) {
+    if (String(state.filterDossier).startsWith('cat:')) {
+      const catId = parseInt(state.filterDossier.split(':')[1]);
+      const cat = state.categories.find(c => c.id === catId);
+      if (cat) {
+        const dosIds = state.dossiers.filter(d => d.categorie === cat.nom || d.categorie === cat.id).map(d => d.id);
+        items = items.filter(i => dosIds.includes(i.dossier));
+      }
+    } else {
+      items = items.filter(i => i.dossier === state.filterDossier);
+    }
+  }
+  if (state.search) items = items.filter(i =>
+    (i.nom||'').toLowerCase().includes(state.search.toLowerCase()) ||
+    (i.description||'').toLowerCase().includes(state.search.toLowerCase())
+  );
+
+  if (!items.length) return emptyState('Aucun contenu', 'Ajoutez votre première ressource avec le bouton « Ajouter »');
+
+  if (state.groupBy === 'none') {
+    return `<div class="knowledge-grid">${items.map(knowledgeCard).join('')}</div>`;
+  }
+
+  const groups = buildGroups(items, state.groupBy);
+  let html = '';
+  groups.forEach(g => {
+    html += `<div class="group-label">
+      ${g.color ? `<span class="group-label-dot" style="background:${g.color}"></span>` : ''}
+      ${escHtml(g.label)} <span style="color:var(--text3);font-size:12px;font-weight:400">${g.items.length}</span>
+    </div>
+    <div class="knowledge-grid" style="margin-bottom:24px">${g.items.map(knowledgeCard).join('')}</div>`;
+  });
+  return html;
+}
+
+function buildGroups(items, by) {
+  const map = new Map();
+  items.forEach(item => {
+    let key, label, color = null;
+    if (by === 'dossier') {
+      const d = state.dossiers.find(d => d.id === item.dossier);
+      key = item.dossier || '__none';
+      label = d ? d.nom : 'Sans dossier';
+      if (d) {
+        const cat = state.categories.find(c => c.nom === d.categorie || c.id === d.categorie);
+        color = cat ? (cat.couleur || null) : null;
+      }
+    } else if (by === 'type') {
+      key = item.type || '__none';
+      label = { web: 'Web', fichier: 'Fichiers', note: 'Notes' }[item.type] || item.type;
+      color = { web: '#2563eb', fichier: '#16a34a', note: '#ca8a04' }[item.type] || null;
+    } else if (by === 'categorie') {
+      const d = state.dossiers.find(d => d.id === item.dossier);
+      const cat = d ? state.categories.find(c => c.nom === d.categorie || c.id === d.categorie) : null;
+      key = cat ? cat.id : '__none';
+      label = cat ? cat.nom : 'Sans catégorie';
+      color = cat ? (cat.couleur || null) : null;
+    }
+    if (!map.has(key)) map.set(key, { label, color, items: [] });
+    map.get(key).items.push(item);
+  });
+  return Array.from(map.values());
+}
+
+function knowledgeCard(item) {
+  const d = state.dossiers.find(d => d.id === item.dossier);
+  const cat = d ? state.categories.find(c => c.nom === d.categorie || c.id === d.categorie) : null;
+  const catColor = cat ? (cat.couleur || '#9b9b97') : '#9b9b97';
+
+  const icon = {
+    web: `<div class="card-icon card-icon-web">${svgWeb(16)}</div>`,
+    fichier: `<div class="card-icon card-icon-fichier">${svgFile(16)}</div>`,
+    note: `<div class="card-icon card-icon-note">${svgNote(16)}</div>`,
+  }[item.type] || '';
+
+  const badge = `<span class="card-type-badge badge-${item.type}">${item.type}</span>`;
+
+  return `<div class="knowledge-card" onclick="openDetailModal(${item.id})">
+    <div class="card-header">
+      ${icon}
+      <span class="card-title">${escHtml(item.nom || 'Sans titre')}</span>
+    </div>
+    ${item.description ? `<p class="card-desc">${escHtml(stripHtml(item.description))}</p>` : ''}
+    <div class="card-footer">
+      ${d ? `<span class="folder-tag"><span class="folder-dot" style="background:${catColor}"></span>${escHtml(d.nom)}</span>` : ''}
+      ${badge}
+    </div>
+  </div>`;
+}
+
+// ══════════════════════════════════════════════
+//  MODALS
+// ══════════════════════════════════════════════
+let modalMode = 'add'; // 'add' | 'edit'
+let modalItemId = null;
+let modalCurrentType = 'note';
+
+function openAddModal(defaultType) {
+  modalMode = 'add';
+  modalItemId = null;
+  modalCurrentType = defaultType || (state.tab === 'tasks' ? 'action' : 'note');
+  document.getElementById('modalTitle').textContent = 'Ajouter';
+  buildModalBody(modalCurrentType, null);
+  document.getElementById('addOverlay').classList.add('open');
+}
+
+function openEditModal(id) {
+  const item = state.items.find(i => i.id === id);
+  if (!item) return;
+  modalMode = 'edit';
+  modalItemId = id;
+  modalCurrentType = item.type;
+  document.getElementById('modalTitle').textContent = 'Modifier';
+  buildModalBody(item.type, item);
+  document.getElementById('addOverlay').classList.add('open');
+}
+
+function editFromDetail() {
+  closeDetailModal();
+  if (state.detailItem) openEditModal(state.detailItem.id);
+}
+
+function closeAddModal() {
+  document.getElementById('addOverlay').classList.remove('open');
+}
+
+function buildModalBody(type, item) {
+  const body = document.getElementById('modalBody');
+  const dossierOpts = state.dossiers.map(d =>
+    `<option value="${d.id}"${item && item.dossier === d.id ? ' selected' : ''}>${escHtml(d.nom)}</option>`
+  ).join('');
+  const prioOpts = ['Critique','Haute','Moyenne','Basse'].map(p =>
+    `<option value="${p}"${item && item.priorite === p ? ' selected' : ''}>${p}</option>`
+  ).join('');
+
+  let typeSelector = '';
+  if (state.tab !== 'tasks') {
+    typeSelector = `<div class="form-field">
+      <div class="type-selector">
+        ${typeBtn('note', 'Note', svgNote(18))}
+        ${typeBtn('web', 'Lien Web', svgWeb(18))}
+        ${typeBtn('fichier', 'Fichier', svgFile(18))}
+      </div>
+    </div>`;
+  }
+
+  const dateVal = item && item.echeance ? new Date(item.echeance * 1000).toISOString().split('T')[0] : '';
+
+  body.innerHTML = typeSelector + `
+    <div class="form-field">
+      <label class="form-label">Nom</label>
+      <input class="form-input" id="f-nom" type="text" placeholder="Titre…" value="${item ? escHtml(item.nom||'') : ''}">
+    </div>
+    ${type !== 'action' ? `<div class="form-field">
+      <label class="form-label">Description</label>
+      <textarea class="form-textarea" id="f-desc" placeholder="Description…">${item ? escHtml(item.description||'') : ''}</textarea>
+    </div>` : ''}
+    ${type === 'web' ? `<div class="form-field">
+      <label class="form-label">URL</label>
+      <input class="form-input" id="f-lien" type="url" placeholder="https://…" value="${item ? escHtml(item.lien||'') : ''}">
+    </div>` : ''}
+    ${type !== 'action' ? `<div class="form-field">
+      <label class="form-label">Dossier</label>
+      <select class="form-select" id="f-dossier"><option value="">— Aucun —</option>${dossierOpts}</select>
+    </div>` : ''}
+    ${type === 'action' ? `
+    <div class="form-field">
+      <label class="form-label">Priorité</label>
+      <select class="form-select" id="f-priorite"><option value="">— Aucune —</option>${prioOpts}</select>
+    </div>
+    <div class="form-field">
+      <label class="form-label">Échéance</label>
+      <input class="form-input" id="f-echeance" type="date" value="${dateVal}">
+    </div>` : ''}
+  `;
+
+  modalCurrentType = type;
+  // Activate type buttons
+  body.querySelectorAll('.type-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.type === type);
+    b.onclick = () => { modalCurrentType = b.dataset.type; buildModalBody(b.dataset.type, null); };
+  });
+}
+
+function typeBtn(type, label, iconSvg) {
+  return `<button class="type-btn${modalCurrentType===type?' active':''}" data-type="${type}" onclick="modalCurrentType='${type}';buildModalBody('${type}',null)">
+    ${iconSvg}
+    ${label}
+  </button>`;
+}
+
+async function saveModal() {
+  const nom = document.getElementById('f-nom')?.value?.trim();
+  if (!nom) { alert('Veuillez saisir un nom.'); return; }
+
+  const rec = { nom, type: modalCurrentType };
+  const desc = document.getElementById('f-desc');
+  if (desc) rec.description = desc.value;
+  const lien = document.getElementById('f-lien');
+  if (lien) rec.lien = lien.value;
+  const dos = document.getElementById('f-dossier');
+  if (dos && dos.value) rec.dossier = parseInt(dos.value);
+  const prio = document.getElementById('f-priorite');
+  if (prio && prio.value) rec.priorite = prio.value;
+  const ech = document.getElementById('f-echeance');
+  if (ech && ech.value) rec.echeance = Math.floor(new Date(ech.value).getTime() / 1000);
+
+  try {
+    if (modalMode === 'edit' && modalItemId) {
+      await grist.docApi.applyUserActions([['UpdateRecord', 'Item', modalItemId, rec]]);
+    } else {
+      await grist.docApi.applyUserActions([['AddRecord', 'Item', null, rec]]);
+    }
+    closeAddModal();
+    await fetchAll();
+  } catch(e) {
+    console.error(e);
+    alert('Erreur lors de l\'enregistrement : ' + e.message);
+  }
+}
+
+// ── DETAIL MODAL ──
+function openDetailModal(id) {
+  const item = state.items.find(i => i.id === id);
+  if (!item) return;
+  state.detailItem = item;
+  document.getElementById('detailTitle').textContent = item.nom || 'Sans titre';
+  renderDetailBody(item);
+  document.getElementById('detailOverlay').classList.add('open');
+}
+
+function renderDetailBody(item) {
+  const d = state.dossiers.find(d => d.id === item.dossier);
+  const cat = d ? state.categories.find(c => c.nom === d.categorie || c.id === d.categorie) : null;
+  const catColor = cat ? (cat.couleur || '#9b9b97') : '#9b9b97';
+  const dateStr = item.echeance ? formatDate(item.echeance) : null;
+  const isOverdue = item.echeance && !item.termine && new Date(item.echeance * 1000) < new Date();
+
+  let html = `<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px">`;
+  if (item.type) html += `<span class="card-type-badge badge-${item.type}">${item.type}</span>`;
+  if (item.priorite) html += `<span class="priority-badge priority-${item.priorite.toLowerCase()}">${item.priorite}</span>`;
+  if (dateStr) html += `<span class="task-date${isOverdue?' overdue':''}" style="font-size:12.5px">${dateStr}</span>`;
+  if (d) html += `<span class="folder-tag"><span class="folder-dot" style="background:${catColor}"></span>${escHtml(d.nom)}</span>`;
+  html += '</div>';
+
+  if (item.description) {
+    html += `<div class="detail-desc">${escHtml(stripHtml(item.description))}</div>`;
+  }
+  if (item.lien) {
+    html += `<div class="form-field">
+      <span class="form-label">Lien</span>
+      <a href="${escHtml(item.lien)}" target="_blank" class="detail-link" style="font-size:14px">${escHtml(item.lien)}</a>
+    </div>`;
+  }
+  if (item.type === 'action') {
+    html += `<div style="display:flex;align-items:center;gap:10px;margin-top:8px">
+      <div class="task-checkbox${item.termine?' checked':''}" style="cursor:pointer" onclick="toggleTask(${item.id});state.detailItem.termine=!state.detailItem.termine;renderDetailBody(state.detailItem)">
+        <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <span style="font-size:13.5px;color:var(--text2)">${item.termine ? 'Terminée' : 'Marquer comme terminée'}</span>
+    </div>`;
+  }
+
+  document.getElementById('detailBody').innerHTML = html;
+}
+
+function closeDetailModal() {
+  document.getElementById('detailOverlay').classList.remove('open');
+}
+
+// Close modals on overlay click
+document.getElementById('addOverlay').addEventListener('click', function(e) {
+  if (e.target === this) closeAddModal();
+});
+document.getElementById('detailOverlay').addEventListener('click', function(e) {
+  if (e.target === this) closeDetailModal();
+});
+
+// ══════════════════════════════════════════════
+//  ACTIONS
+// ══════════════════════════════════════════════
+async function toggleTask(id) {
+  const item = state.items.find(i => i.id === id);
+  if (!item) return;
+  const newVal = !item.termine;
+  try {
+    await grist.docApi.applyUserActions([['UpdateRecord', 'Item', id, { termine: newVal }]]);
+    item.termine = newVal;
+    renderContent();
+  } catch(e) { console.error(e); }
+}
+
+async function deleteItem(id) {
+  if (!confirm('Supprimer cet élément ?')) return;
+  try {
+    await grist.docApi.applyUserActions([['RemoveRecord', 'Item', id]]);
+    await fetchAll();
+  } catch(e) { console.error(e); alert('Erreur : ' + e.message); }
+}
+
+// ══════════════════════════════════════════════
+//  COUNT HELPERS
+// ══════════════════════════════════════════════
+function countKnowledge(type) {
+  const items = state.items.filter(i => ['web','fichier','note'].includes(i.type));
+  return type === 'all' ? items.length : items.filter(i => i.type === type).length;
+}
+function countKnowledgeByDossier(dosId) {
+  return state.items.filter(i => ['web','fichier','note'].includes(i.type) && i.dossier === dosId).length;
+}
+function countKnowledgeByCat(cat) {
+  const dosIds = state.dossiers.filter(d => d.categorie === cat.nom || d.categorie === cat.id).map(d => d.id);
+  return state.items.filter(i => ['web','fichier','note'].includes(i.type) && dosIds.includes(i.dossier)).length;
+}
+function countTasks(type) {
+  const tasks = state.items.filter(i => i.type === 'action');
+  if (type === 'all') return tasks.length;
+  if (type === 'todo') return tasks.filter(t => !t.termine).length;
+  if (type === 'done') return tasks.filter(t => t.termine).length;
+  return 0;
+}
+function countTasksByPriority(p) {
+  return state.items.filter(i => i.type === 'action' && i.priorite === p).length;
+}
+
+// ══════════════════════════════════════════════
+//  UTILS
+// ══════════════════════════════════════════════
+function escHtml(str) {
+  if (!str) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function stripHtml(str) {
+  if (!str) return '';
+  return str.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+}
+function formatDate(ts) {
+  if (!ts) return '';
+  const d = new Date(ts * 1000);
+  return d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+function emptyState(title, sub) {
+  return `<div class="empty-state">
+    <svg width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M9 13h6m-3-3v6m-9 1V7a2 2 0 0 1 2-2h6l2 2h6a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2z"/></svg>
+    <span class="empty-title">${title}</span>
+    <span class="empty-sub">${sub}</span>
+  </div>`;
+}
+
+// ── SVG ICONS ──
+function svgWeb(s) {
+  return `<svg width="${s}" height="${s}" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>`;
+}
+function svgNote(s) {
+  return `<svg width="${s}" height="${s}" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>`;
+}
+function svgFile(s) {
+  return `<svg width="${s}" height="${s}" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>`;
+}
+
+// ── KEYBOARD ──
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { closeAddModal(); closeDetailModal(); }
+  if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+    if (document.getElementById('addOverlay').classList.contains('open')) saveModal();
+  }
+});
+</script>
+</body>
+</html>
