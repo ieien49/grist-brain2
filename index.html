@@ -212,7 +212,7 @@
   }
   .icon-btn:hover { background: var(--border); color: var(--text); }
 
-  /* ── KNOWLEDGE GRID ── */
+  /* ── KNOWLEDGE GRID (cards fallback) ── */
   .knowledge-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
@@ -255,6 +255,69 @@
   .badge-web { background: #eff6ff; color: #2563eb; }
   .badge-fichier { background: #f0fdf4; color: #16a34a; }
   .badge-note { background: #fefce8; color: #ca8a04; }
+
+  /* ── VIEW TOGGLE ── */
+  .view-toggle {
+    display: flex; gap: 2px;
+    background: var(--bg3); border-radius: 7px; padding: 3px;
+  }
+  .view-toggle-btn {
+    display: flex; align-items: center; justify-content: center;
+    width: 28px; height: 24px; border-radius: 5px; border: none; background: transparent;
+    cursor: pointer; color: var(--text3); transition: all var(--transition);
+  }
+  .view-toggle-btn.active { background: var(--bg); color: var(--text); box-shadow: var(--shadow); }
+  .view-toggle-btn:hover:not(.active) { color: var(--text2); }
+
+  /* ── KNOWLEDGE LIST (table-style) ── */
+  .knowledge-table {
+    width: 100%; border-collapse: collapse;
+  }
+  .knowledge-table thead th {
+    text-align: left; font-size: 11.5px; font-weight: 600; color: var(--text3);
+    text-transform: uppercase; letter-spacing: .06em;
+    padding: 6px 10px; border-bottom: 1.5px solid var(--border);
+    background: var(--bg); position: sticky; top: 0; z-index: 1;
+    white-space: nowrap;
+  }
+  .knowledge-table thead th:first-child { padding-left: 4px; }
+  .knowledge-table tbody tr {
+    border-bottom: 1px solid var(--border);
+    cursor: pointer; transition: background var(--transition);
+  }
+  .knowledge-table tbody tr:hover { background: var(--bg2); }
+  .knowledge-table tbody tr:last-child { border-bottom: none; }
+  .knowledge-table td {
+    padding: 8px 10px; vertical-align: middle; font-size: 13.5px;
+  }
+  .knowledge-table td:first-child { padding-left: 4px; }
+  .kt-icon-cell {
+    width: 32px; padding-right: 0 !important;
+  }
+  .kt-icon {
+    width: 26px; height: 26px; border-radius: 6px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .kt-name { font-weight: 500; color: var(--text); max-width: 300px; }
+  .kt-name-sub { font-size: 12px; color: var(--text3); margin-top: 1px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 320px; }
+  .kt-folder { white-space: nowrap; }
+  .kt-actions {
+    display: flex; gap: 2px; opacity: 0; transition: opacity var(--transition);
+  }
+  .knowledge-table tbody tr:hover .kt-actions { opacity: 1; }
+  .kt-link { color: var(--accent); font-size: 12px; max-width: 180px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
+
+  /* ── GROUP SECTION (list mode) ── */
+  .list-group-header {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 11.5px; font-weight: 600; color: var(--text3);
+    text-transform: uppercase; letter-spacing: .06em;
+    padding: 10px 4px 6px; border-bottom: 1.5px solid var(--border);
+    margin-top: 20px;
+  }
+  .list-group-header:first-child { margin-top: 0; }
 
   /* ── MODAL ── */
   .overlay {
@@ -479,6 +542,7 @@ let state = {
   filterPriority: null,
   search: '',
   groupBy: 'dossier',      // 'dossier' | 'type' | 'categorie' | 'none'
+  viewMode: 'list',        // 'list' | 'grid'
   editingItem: null,
   detailItem: null,
 };
@@ -694,6 +758,14 @@ function renderToolbar() {
       <option value="categorie"${state.groupBy==='categorie'?' selected':''}>Par catégorie</option>
       <option value="none"${state.groupBy==='none'?' selected':''}>Sans groupe</option>
     </select>
+    <div class="view-toggle">
+      <button class="view-toggle-btn${state.viewMode==='list'?' active':''}" onclick="state.viewMode='list';renderContent()" title="Vue liste">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+      </button>
+      <button class="view-toggle-btn${state.viewMode==='grid'?' active':''}" onclick="state.viewMode='grid';renderContent()" title="Vue grille">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      </button>
+    </div>
     <div class="search-wrap">
       <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
       <input type="text" placeholder="Rechercher…" value="${escHtml(state.search)}" oninput="onSearch(this.value)">
@@ -805,20 +877,93 @@ function renderKnowledge() {
 
   if (!items.length) return emptyState('Aucun contenu', 'Ajoutez votre première ressource avec le bouton « Ajouter »');
 
-  if (state.groupBy === 'none') {
-    return `<div class="knowledge-grid">${items.map(knowledgeCard).join('')}</div>`;
+  if (state.viewMode === 'grid') {
+    // GRID MODE
+    if (state.groupBy === 'none') {
+      return `<div class="knowledge-grid">${items.map(knowledgeCard).join('')}</div>`;
+    }
+    const groups = buildGroups(items, state.groupBy);
+    let html = '';
+    groups.forEach(g => {
+      html += `<div class="group-label">
+        ${g.color ? `<span class="group-label-dot" style="background:${g.color}"></span>` : ''}
+        ${escHtml(g.label)} <span style="color:var(--text3);font-size:12px;font-weight:400">${g.items.length}</span>
+      </div>
+      <div class="knowledge-grid" style="margin-bottom:24px">${g.items.map(knowledgeCard).join('')}</div>`;
+    });
+    return html;
   }
 
+  // LIST MODE (default)
+  if (state.groupBy === 'none') {
+    return knowledgeTable(items, false);
+  }
   const groups = buildGroups(items, state.groupBy);
   let html = '';
-  groups.forEach(g => {
-    html += `<div class="group-label">
-      ${g.color ? `<span class="group-label-dot" style="background:${g.color}"></span>` : ''}
-      ${escHtml(g.label)} <span style="color:var(--text3);font-size:12px;font-weight:400">${g.items.length}</span>
-    </div>
-    <div class="knowledge-grid" style="margin-bottom:24px">${g.items.map(knowledgeCard).join('')}</div>`;
+  groups.forEach((g, idx) => {
+    html += `<div class="list-group-header">
+      ${g.color ? `<span style="width:8px;height:8px;border-radius:50%;background:${g.color};display:inline-block"></span>` : ''}
+      ${escHtml(g.label)}
+      <span style="font-weight:400;color:var(--text3)">${g.items.length}</span>
+    </div>`;
+    html += knowledgeTable(g.items, state.groupBy === 'dossier');
   });
   return html;
+}
+
+function knowledgeTable(items, hideDossier) {
+  const showFolder = !hideDossier;
+  const rows = items.map(item => {
+    const d = state.dossiers.find(d => d.id === item.dossier);
+    const cat = d ? state.categories.find(c => c.nom === d.categorie || c.id === d.categorie) : null;
+    const catColor = cat ? (cat.couleur || '#9b9b97') : '#9b9b97';
+    const desc = item.description ? stripHtml(item.description) : '';
+
+    const iconClasses = { web: 'card-icon-web', fichier: 'card-icon-fichier', note: 'card-icon-note' };
+    const icon = `<div class="kt-icon ${iconClasses[item.type]||''}">${{web:svgWeb(13),fichier:svgFile(13),note:svgNote(13)}[item.type]||''}</div>`;
+    const badge = `<span class="card-type-badge badge-${item.type}">${item.type}</span>`;
+
+    const folderCell = showFolder && d
+      ? `<td class="kt-folder"><span class="folder-tag"><span class="folder-dot" style="background:${catColor}"></span>${escHtml(d.nom)}</span></td>`
+      : showFolder ? `<td></td>` : '';
+
+    const linkCell = item.lien
+      ? `<td><a href="${escHtml(item.lien)}" target="_blank" class="kt-link" onclick="event.stopPropagation()">${escHtml(item.lien.replace(/^https?:\/\/(www\.)?/,'').split('/')[0])}</a></td>`
+      : `<td></td>`;
+
+    return `<tr onclick="openDetailModal(${item.id})">
+      <td class="kt-icon-cell">${icon}</td>
+      <td>
+        <div class="kt-name">${escHtml(item.nom || 'Sans titre')}</div>
+        ${desc ? `<div class="kt-name-sub">${escHtml(desc.substring(0,120))}</div>` : ''}
+      </td>
+      ${folderCell}
+      ${linkCell}
+      <td>${badge}</td>
+      <td>
+        <div class="kt-actions">
+          <button class="icon-btn" title="Modifier" onclick="event.stopPropagation();openEditModal(${item.id})">
+            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          </button>
+          <button class="icon-btn" title="Supprimer" onclick="event.stopPropagation();deleteItem(${item.id})">
+            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+          </button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+
+  return `<table class="knowledge-table">
+    <thead><tr>
+      <th class="kt-icon-cell"></th>
+      <th>Nom</th>
+      ${showFolder ? '<th>Dossier</th>' : ''}
+      <th>Lien</th>
+      <th>Type</th>
+      <th></th>
+    </tr></thead>
+    <tbody>${rows}</tbody>
+  </table>`;
 }
 
 function buildGroups(items, by) {
