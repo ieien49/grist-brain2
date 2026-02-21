@@ -274,6 +274,13 @@
 // ═══════════════════════════════
 grist.ready({ requiredAccess: 'full', columns: [] });
 
+// ════════════════════════════════════════════════════
+//  CONFIGURATION — à mettre à jour si nécessaire
+// ════════════════════════════════════════════════════
+const GRIST_ORIGIN = 'https://grist.maine-et-loire.fr';
+const GRIST_DOC_ID = '9cyPGzEZU3DTAopH1G3S41';
+// ════════════════════════════════════════════════════
+
 // ═══════════════════════════════
 //  STATE
 // ═══════════════════════════════
@@ -283,32 +290,9 @@ const S = {
   search:'', groupBy:'dossier', viewMode:'list', detailItem:null
 };
 
-let gristOrigin = window.location.origin;
-let gristDocId = null;
+let gristOrigin = GRIST_ORIGIN;
+let gristDocId = GRIST_DOC_ID;
 const metaCache = {};
-
-// ─── DOCID : récupéré depuis les postMessages RPC de Grist ───────────────────
-// Format : "docId":"XXXX" ou "args":["XXXX",...] (openDoc)
-// L'origin est obtenu depuis ancestorOrigins (URL du parent iframe = Grist)
-
-(function initOrigin() {
-  const ao = window.location.ancestorOrigins && window.location.ancestorOrigins[0];
-  const src = ao || document.referrer || '';
-  const m = src.match(/^(https?:\/\/[^\/]+)/);
-  if (m) gristOrigin = m[1];
-})();
-
-window.addEventListener('message', function(evt) {
-  if (gristDocId) return;
-  try {
-    const raw = typeof evt.data === 'string' ? evt.data : JSON.stringify(evt.data || '');
-    const m1 = raw.match(/"docId"\s*:\s*"([A-Za-z0-9]{15,})"/);
-    if (m1) { gristDocId = m1[1]; if (evt.origin && evt.origin !== 'null') gristOrigin = evt.origin; return; }
-    const m2 = raw.match(/"args"\s*:\s*\[\s*"([A-Za-z0-9]{15,})"/);
-    if (m2) { gristDocId = m2[1]; if (evt.origin && evt.origin !== 'null') gristOrigin = evt.origin; }
-  } catch(e) {}
-});
-// ─────────────────────────────────────────────────────────────────────────────
 
 let booted = false;
 async function boot() {
@@ -866,15 +850,9 @@ document.getElementById('detOv').addEventListener('click',e=>{if(e.target.id==='
 //  PREVIEW
 // ═══════════════════════════════
 async function prevAttach(id, nameHint) {
-  // Always try to get real filename from metadata first
   const meta = await fetchMeta(id);
   const name = (meta && meta.fileName) ? meta.fileName : (nameHint || `fichier-${id}`);
   const url = attachUrl(id);
-
-  // Warn in console if docId is still missing
-  if (!gristDocId) {
-    console.warn('[SecondBrain] gristDocId not resolved — attachment URLs will not work. referrer:', document.referrer);
-  }
 
   const ext = (name.split('.').pop() || '').toLowerCase();
   document.getElementById('prevName').textContent = name;
