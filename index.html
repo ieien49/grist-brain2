@@ -287,31 +287,43 @@ let gristOrigin = window.location.origin;
 let gristDocId = null;
 const metaCache = {};
 
-// Resolve docId from referrer URL
+// Resolve docId: widget est hébergé sur GitHub Pages,
+// donc document.referrer ne contient PAS l'URL Grist.
+// On utilise window.location.ancestorOrigins (l'URL du parent iframe)
+// ou on attend le postMessage beat de Grist.
 async function resolveDocId() {
-  const ref = document.referrer || '';
-  const origin = ref.match(/^(https?:\/\/[^\/]+)/)?.[1] || window.location.origin;
-  gristOrigin = origin;
-  const slug = ref.replace(/\/p\/\d+.*/, '').split('/').filter(Boolean).pop();
-  if (!slug) return;
-  try {
-    const r = await fetch(`${gristOrigin}/api/docs/${slug}`, { credentials: 'include' });
-    if (r.ok) { const d = await r.json(); if (d && d.id) { gristDocId = d.id; return; } }
-  } catch(e) {}
-  gristDocId = slug;
+  // ancestorOrigins[0] = l'URL de la page Grist qui contient l'iframe
+  const parentUrl = (window.location.ancestorOrigins && window.location.ancestorOrigins[0]) || '';
+  if (parentUrl) {
+    const origin = parentUrl.match(/^(https?:\/\/[^\/]+)/)?.[1] || '';
+    if (origin) gristOrigin = origin;
+    // Extraire le slug : ex. https://grist.host/o/docs/SLUG/NOM/p/8
+    const slugMatch = parentUrl.match(/\/o\/[^\/]+\/([^\/\?#]+)/);
+    if (slugMatch) {
+      const slug = slugMatch[1];
+      try {
+        const r = await fetch(`${gristOrigin}/api/docs/${slug}`, { credentials: 'include' });
+        if (r.ok) { const d = await r.json(); if (d && d.id) { gristDocId = d.id; return; } }
+      } catch(e) {}
+      gristDocId = slug; // fallback: slug peut être l'id complet
+    }
+  }
 }
 
 window.addEventListener('message', function(evt) {
   try {
     const d = typeof evt.data === 'string' ? JSON.parse(evt.data) : evt.data;
-    if (d && d.docId && !gristDocId) { gristDocId = d.docId; if (evt.origin && evt.origin !== 'null') gristOrigin = evt.origin; }
+    if (d && d.docId && !gristDocId) {
+      gristDocId = d.docId;
+      if (evt.origin && evt.origin !== 'null') gristOrigin = evt.origin;
+    }
   } catch(e) {}
 });
 
 let booted = false;
 async function boot() {
   if (booted) return; booted = true;
-  resolveDocId(); // fire and forget — needed only for attachment API
+  resolveDocId(); // fire and forget
   try {
     const [items, dossiers, cats] = await Promise.all([
       grist.docApi.fetchTable('Item'),
@@ -334,8 +346,7 @@ grist.onRecords(function(_records, _mappings) {
   boot();
 });
 
-// Fallback : si onRecords ne se déclenche pas (widget non lié à une table),
-// on démarre quand même après un court délai
+// Fallback si onRecords ne se déclenche pas
 setTimeout(function() { boot(); }, 1500);
 
 function toRecs(t) {
@@ -343,7 +354,6 @@ function toRecs(t) {
   return t.id.map((id,i) => { const r={id}; Object.keys(t).filter(k=>k!=='id').forEach(k=>r[k]=t[k][i]); return r; });
 }
 
-// Parse Grist attachment column: ['L',1,2,...] or [] or null
 function parseAttachIds(v) {
   if (!v) return [];
   if (Array.isArray(v)) { if (v[0]==='L') return v.slice(1).map(Number).filter(Boolean); return v.map(Number).filter(Boolean); }
@@ -353,29 +363,44 @@ function parseAttachIds(v) {
 // ═══════════════════════════════
 //  ATTACHMENT API
 // ═══════════════════════════════
+
+// L'URL de téléchargement doit passer par le serveur Grist.
+// gristOrigin est récupéré depuis ancestorOrigins (URL du parent iframe).
 function attachUrl(id) {
-  if (gristDocId) return `${gristOrigin}/api/docs/${gristDocId}/attachments/${id}/download`;
+  if (gristDocId && gristOrigin) {
+    return `${gristOrigin}/api/docs/${gristDocId}/attachments/${id}/download`;
+  }
   return `#a${id}`;
 }
 
-async function uploadFile(file, onProgress) {
-  if (!gristDocId) throw new Error('DocId introuvable. Vérifiez que le widget est chargé dans Grist.');
-  const fd = new FormData(); fd.append('upload', file);
-  const resp = await fetch(`${gristOrigin}/api/docs/${gristDocId}/attachments`, {
-    method:'POST', body:fd, credentials:'include'
-  });
-  if (!resp.ok) { const t=await resp.text().catch(()=>''); throw new Error(`HTTP ${resp.status}: ${t}`); }
-  return await resp.json(); // [id, ...]
-}
-
+// Récupère les métadonnées via grist.docApi (pas de CORS)
 async function fetchMeta(id) {
   if (metaCache[id]) return metaCache[id];
-  if (!gristDocId) return { fileName:`fichier-${id}`, fileSize:0 };
   try {
-    const r = await fetch(`${gristOrigin}/api/docs/${gristDocId}/attachments/${id}`, {credentials:'include'});
-    if (!r.ok) return { fileName:`fichier-${id}`, fileSize:0 };
-    const d = await r.json(); metaCache[id] = d; return d;
-  } catch { return { fileName:`fichier-${id}`, fileSize:0 }; }
+    // Grist docApi expose getAttachmentMetadata sur certaines versions
+    if (grist.docApi.getAttachmentMetadata) {
+      const meta = await grist.docApi.getAttachmentMetadata(id);
+      if (meta) { metaCache[id] = meta; return meta; }
+    }
+    // Fallback: fetch direct (fonctionne si même origine ou CORS permissif)
+    if (gristDocId && gristOrigin) {
+      const r = await fetch(`${gristOrigin}/api/docs/${gristDocId}/attachments/${id}`, { credentials: 'include' });
+      if (r.ok) { const d = await r.json(); metaCache[id] = d; return d; }
+    }
+  } catch(e) {}
+  return { fileName: `fichier-${id}`, fileSize: 0 };
+}
+
+// Upload via fetch direct (requiert que le serveur accepte CORS depuis GitHub Pages,
+// ou que le widget soit hébergé sur le même domaine que Grist)
+async function uploadFile(file) {
+  if (!gristDocId || !gristOrigin) throw new Error('DocId ou origine Grist introuvable. Le widget doit être hébergé sur le même domaine que Grist pour uploader des fichiers.');
+  const fd = new FormData(); fd.append('upload', file);
+  const resp = await fetch(`${gristOrigin}/api/docs/${gristDocId}/attachments`, {
+    method: 'POST', body: fd, credentials: 'include'
+  });
+  if (!resp.ok) { const t = await resp.text().catch(() => ''); throw new Error(`HTTP ${resp.status}: ${t}`); }
+  return await resp.json();
 }
 
 // ═══════════════════════════════
