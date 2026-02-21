@@ -287,43 +287,32 @@ let gristOrigin = window.location.origin;
 let gristDocId = null;
 const metaCache = {};
 
-// Resolve docId: widget est hébergé sur GitHub Pages,
-// donc document.referrer ne contient PAS l'URL Grist.
-// On utilise window.location.ancestorOrigins (l'URL du parent iframe)
-// ou on attend le postMessage beat de Grist.
-async function resolveDocId() {
-  // ancestorOrigins[0] = l'URL de la page Grist qui contient l'iframe
-  const parentUrl = (window.location.ancestorOrigins && window.location.ancestorOrigins[0]) || '';
-  if (parentUrl) {
-    const origin = parentUrl.match(/^(https?:\/\/[^\/]+)/)?.[1] || '';
-    if (origin) gristOrigin = origin;
-    // Extraire le slug : ex. https://grist.host/o/docs/SLUG/NOM/p/8
-    const slugMatch = parentUrl.match(/\/o\/[^\/]+\/([^\/\?#]+)/);
-    if (slugMatch) {
-      const slug = slugMatch[1];
-      try {
-        const r = await fetch(`${gristOrigin}/api/docs/${slug}`, { credentials: 'include' });
-        if (r.ok) { const d = await r.json(); if (d && d.id) { gristDocId = d.id; return; } }
-      } catch(e) {}
-      gristDocId = slug; // fallback: slug peut être l'id complet
-    }
-  }
-}
+// ─── DOCID : récupéré depuis les postMessages RPC de Grist ───────────────────
+// Format : "docId":"XXXX" ou "args":["XXXX",...] (openDoc)
+// L'origin est obtenu depuis ancestorOrigins (URL du parent iframe = Grist)
+
+(function initOrigin() {
+  const ao = window.location.ancestorOrigins && window.location.ancestorOrigins[0];
+  const src = ao || document.referrer || '';
+  const m = src.match(/^(https?:\/\/[^\/]+)/);
+  if (m) gristOrigin = m[1];
+})();
 
 window.addEventListener('message', function(evt) {
+  if (gristDocId) return;
   try {
-    const d = typeof evt.data === 'string' ? JSON.parse(evt.data) : evt.data;
-    if (d && d.docId && !gristDocId) {
-      gristDocId = d.docId;
-      if (evt.origin && evt.origin !== 'null') gristOrigin = evt.origin;
-    }
+    const raw = typeof evt.data === 'string' ? evt.data : JSON.stringify(evt.data || '');
+    const m1 = raw.match(/"docId"\s*:\s*"([A-Za-z0-9]{15,})"/);
+    if (m1) { gristDocId = m1[1]; if (evt.origin && evt.origin !== 'null') gristOrigin = evt.origin; return; }
+    const m2 = raw.match(/"args"\s*:\s*\[\s*"([A-Za-z0-9]{15,})"/);
+    if (m2) { gristDocId = m2[1]; if (evt.origin && evt.origin !== 'null') gristOrigin = evt.origin; }
   } catch(e) {}
 });
+// ─────────────────────────────────────────────────────────────────────────────
 
 let booted = false;
 async function boot() {
   if (booted) return; booted = true;
-  resolveDocId(); // fire and forget
   try {
     const [items, dossiers, cats] = await Promise.all([
       grist.docApi.fetchTable('Item'),
@@ -341,12 +330,7 @@ async function boot() {
   }
 }
 
-// onRecords se déclenche quand Grist a terminé le handshake et est prêt
-grist.onRecords(function(_records, _mappings) {
-  boot();
-});
-
-// Fallback si onRecords ne se déclenche pas
+grist.onRecords(function() { boot(); });
 setTimeout(function() { boot(); }, 1500);
 
 function toRecs(t) {
