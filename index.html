@@ -278,22 +278,60 @@ const S = {
   search:'', groupBy:'dossier', viewMode:'list', detailItem:null
 };
 
-let gristOrigin = window.location.origin;
+let gristOrigin = '';
 let gristDocId = null;
-const metaCache = {}; // attachId -> {fileName, fileSize}
+const metaCache = {};
 
 // ═══════════════════════════════
 //  GRIST BOOTSTRAP
 // ═══════════════════════════════
-grist.ready({ requiredAccess:'full', columns:[] });
+grist.ready({ requiredAccess: 'full', columns: [] });
+
+// Extract docId and origin from the parent Grist URL
+// Supports: /doc/{docId}, /o/{org}/doc/{docId}, /o/{org}/{slug}/
+async function extractGristContext() {
+  const sources = [
+    document.referrer,
+    window.location.href,
+    (window.location.ancestorOrigins && window.location.ancestorOrigins[0]) || '',
+  ];
+
+  for (const url of sources) {
+    if (!url) continue;
+    // Pattern: /doc/{docId}  or  /o/{org}/doc/{docId}
+    const m1 = url.match(/(https?:\/\/[^\/]+).*\/doc\/([^\/\?#]+)/);
+    if (m1) { gristOrigin = m1[1]; gristDocId = m1[2]; return; }
+    // Pattern: /o/{org}/{slug}/ — store origin at least
+    const m2 = url.match(/(https?:\/\/[^\/]+)/);
+    if (m2) gristOrigin = m2[1];
+  }
+
+  // Fallback: try to get docId from grist.docApi itself
+  // grist.docApi.getDocName() returns title, not id — but we can get the id
+  // via a HEAD request to the attachments endpoint using the referrer slug
+  if (!gristDocId) {
+    // Try extracting slug from referrer and resolving to full docId via API
+    const ref = document.referrer;
+    const slugMatch = ref.match(/https?:\/\/[^\/]+\/o\/([^\/]+)\/([^\/\?#]+)/);
+    if (slugMatch && gristOrigin) {
+      const org = slugMatch[1];
+      const slug = slugMatch[2];
+      try {
+        const r = await fetch(`${gristOrigin}/api/orgs/${org}/docs`, { credentials: 'include' });
+        if (r.ok) {
+          const docs = await r.json();
+          const found = docs.find(d => d.urlId === slug || d.id === slug);
+          if (found) { gristDocId = found.id; return; }
+        }
+      } catch(e) { /* silent */ }
+      // Last resort: use the slug directly (works on some Grist configs)
+      gristDocId = slug;
+    }
+  }
+}
 
 async function boot() {
-  // Try to get docId from parent URL (referrer) or current URL
-  const tryDocId = (url) => { const m = url.match(/\/doc\/([^\/\?#]+)/); return m ? m[1] : null; };
-  gristDocId = tryDocId(document.referrer) || tryDocId(window.location.href);
-  // Also try query param
-  if (!gristDocId) { const p = new URLSearchParams(window.location.search); gristDocId = p.get('docId'); }
-
+  await extractGristContext();
   try {
     const [items, dossiers, cats] = await Promise.all([
       grist.docApi.fetchTable('Item'),
@@ -303,10 +341,26 @@ async function boot() {
     S.items = toRecs(items); S.dossiers = toRecs(dossiers); S.categories = toRecs(cats);
     render();
   } catch(e) {
-    console.error(e);
+    console.error('boot error:', e);
     document.getElementById('content').innerHTML = `<div class="empty"><span class="etitle">Erreur de chargement</span><span class="esub">${e.message}</span></div>`;
   }
 }
+
+// Capture docId from Grist's internal websocket beat messages
+// The beat payload contains the full docId: {"beat":"alive","docId":"..."}
+window.addEventListener('message', function(evt) {
+  try {
+    const data = typeof evt.data === 'string' ? JSON.parse(evt.data) : evt.data;
+    if (data && data.docId && !gristDocId) {
+      gristDocId = data.docId;
+      if (!gristOrigin && evt.origin) gristOrigin = evt.origin;
+    }
+  } catch(e) {}
+});
+
+// Wait for Grist to signal readiness before fetching data
+grist.onRecords(function() {}); // triggers connection
+setTimeout(boot, 400); // small delay to let grist.ready() handshake complete
 
 function toRecs(t) {
   if (!t || !t.id) return [];
@@ -319,8 +373,6 @@ function parseAttachIds(v) {
   if (Array.isArray(v)) { if (v[0]==='L') return v.slice(1).map(Number).filter(Boolean); return v.map(Number).filter(Boolean); }
   return [];
 }
-
-boot();
 
 // ═══════════════════════════════
 //  ATTACHMENT API
@@ -628,15 +680,19 @@ function buildForm(type, item) {
       <div id="mPendList" class="alist" style="margin-top:6px"></div>
     </div>`:''
 
+  const nomVal = item ? esc(item.nom || '') : '';
+  const lienVal = item ? esc(item.lien || '') : '';
+  const descVal = item ? esc(item.description || '') : '';
+
   body.innerHTML = typesel+`
     <div class="ff"><label class="fl">Nom</label>
-      <input class="fi" id="fNom" type="text" placeholder="Titre…" value="${item?esc(item.nom||'):''}">
+      <input class="fi" id="fNom" type="text" placeholder="Titre…" value="${nomVal}">
     </div>
     ${type!=='action'?`<div class="ff"><label class="fl">Description</label>
-      <textarea class="fta" id="fDesc" placeholder="Description…">${item?esc(item.description||''):''}</textarea>
+      <textarea class="fta" id="fDesc" placeholder="Description…">${descVal}</textarea>
     </div>`:''}
     ${type==='web'?`<div class="ff"><label class="fl">URL</label>
-      <input class="fi" id="fLien" type="url" placeholder="https://…" value="${item?esc(item.lien||'):''}">
+      <input class="fi" id="fLien" type="url" placeholder="https://…" value="${lienVal}">
     </div>`:''}
     ${fileSection}
     ${type!=='action'?`<div class="ff"><label class="fl">Dossier</label>
