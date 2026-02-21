@@ -278,60 +278,42 @@ const S = {
   search:'', groupBy:'dossier', viewMode:'list', detailItem:null
 };
 
-let gristOrigin = '';
+// gristOrigin = server host, gristDocId = full document ID
+let gristOrigin = window.location.origin;
 let gristDocId = null;
 const metaCache = {};
 
-// ═══════════════════════════════
-//  GRIST BOOTSTRAP
-// ═══════════════════════════════
-grist.ready({ requiredAccess: 'full', columns: [] });
-
-// Extract docId and origin from the parent Grist URL
-// Supports: /doc/{docId}, /o/{org}/doc/{docId}, /o/{org}/{slug}/
-async function extractGristContext() {
-  const sources = [
-    document.referrer,
-    window.location.href,
-    (window.location.ancestorOrigins && window.location.ancestorOrigins[0]) || '',
-  ];
-
-  for (const url of sources) {
-    if (!url) continue;
-    // Pattern: /doc/{docId}  or  /o/{org}/doc/{docId}
-    const m1 = url.match(/(https?:\/\/[^\/]+).*\/doc\/([^\/\?#]+)/);
-    if (m1) { gristOrigin = m1[1]; gristDocId = m1[2]; return; }
-    // Pattern: /o/{org}/{slug}/ — store origin at least
-    const m2 = url.match(/(https?:\/\/[^\/]+)/);
-    if (m2) gristOrigin = m2[1];
-  }
-
-  // Fallback: try to get docId from grist.docApi itself
-  // grist.docApi.getDocName() returns title, not id — but we can get the id
-  // via a HEAD request to the attachments endpoint using the referrer slug
-  if (!gristDocId) {
-    // Try extracting slug from referrer and resolving to full docId via API
-    const ref = document.referrer;
-    const slugMatch = ref.match(/https?:\/\/[^\/]+\/o\/([^\/]+)\/([^\/\?#]+)/);
-    if (slugMatch && gristOrigin) {
-      const org = slugMatch[1];
-      const slug = slugMatch[2];
+// Resolve the full docId by calling GET /api/docs/{slug} via fetch
+// Your instance URL pattern: https://host/o/org/slug/
+async function resolveDocId() {
+  // 1. Try referrer URL which contains the page with the widget
+  const ref = document.referrer || '';
+  if (ref) {
+    // Pattern /o/{org}/{slug}/ → call /api/docs/{slug} to get the real id
+    const m = ref.match(/(https?:\/\/[^\/]+)(?:\/o\/[^\/]+)?\/([^\/\?#]+)/);
+    if (m) {
+      gristOrigin = m[1];
+      const slug = m[2];
       try {
-        const r = await fetch(`${gristOrigin}/api/orgs/${org}/docs`, { credentials: 'include' });
+        const r = await fetch(`${gristOrigin}/api/docs/${slug}`, { credentials: 'include' });
         if (r.ok) {
-          const docs = await r.json();
-          const found = docs.find(d => d.urlId === slug || d.id === slug);
-          if (found) { gristDocId = found.id; return; }
+          const doc = await r.json();
+          if (doc && doc.id) { gristDocId = doc.id; console.log('[SecondBrain] docId resolved:', gristDocId); return; }
         }
-      } catch(e) { /* silent */ }
-      // Last resort: use the slug directly (works on some Grist configs)
+      } catch(e) { console.warn('[SecondBrain] resolveDocId fetch failed:', e); }
+      // Fallback: use slug as-is (works when slug === id)
       gristDocId = slug;
+      console.log('[SecondBrain] docId fallback to slug:', gristDocId);
     }
+  }
+  // 2. Try ancestorOrigins (iframe context)
+  if (!gristDocId && window.location.ancestorOrigins && window.location.ancestorOrigins[0]) {
+    gristOrigin = window.location.ancestorOrigins[0];
   }
 }
 
 async function boot() {
-  await extractGristContext();
+  await resolveDocId();
   try {
     const [items, dossiers, cats] = await Promise.all([
       grist.docApi.fetchTable('Item'),
@@ -346,21 +328,20 @@ async function boot() {
   }
 }
 
-// Capture docId from Grist's internal websocket beat messages
-// The beat payload contains the full docId: {"beat":"alive","docId":"..."}
+// Also capture docId from Grist beat postMessage as backup
 window.addEventListener('message', function(evt) {
   try {
     const data = typeof evt.data === 'string' ? JSON.parse(evt.data) : evt.data;
     if (data && data.docId && !gristDocId) {
       gristDocId = data.docId;
-      if (!gristOrigin && evt.origin) gristOrigin = evt.origin;
+      if (evt.origin && evt.origin !== 'null') gristOrigin = evt.origin;
+      console.log('[SecondBrain] docId from postMessage:', gristDocId);
     }
   } catch(e) {}
 });
 
-// Wait for Grist to signal readiness before fetching data
-grist.onRecords(function() {}); // triggers connection
-setTimeout(boot, 400); // small delay to let grist.ready() handshake complete
+grist.onRecords(function() {}); // trigger connection handshake
+setTimeout(boot, 400);
 
 function toRecs(t) {
   if (!t || !t.id) return [];
@@ -880,22 +861,32 @@ document.getElementById('detOv').addEventListener('click',e=>{if(e.target.id==='
 // ═══════════════════════════════
 //  PREVIEW
 // ═══════════════════════════════
-function prevAttach(id, name) {
-  const url=attachUrl(id);
-  const ext=(name.split('.').pop()||'').toLowerCase();
-  document.getElementById('prevName').textContent=name;
-  document.getElementById('prevDl').href=url;
-  const imgs=['jpg','jpeg','png','gif','webp','svg','bmp','ico'];
-  const pb=document.getElementById('prevBody');
-  if(imgs.includes(ext)) {
-    pb.innerHTML=`<img src="${esc(url)}" alt="${esc(name)}">`;
-  } else if(ext==='pdf'||ext==='txt'||ext==='csv'||ext==='md'||ext==='html'||ext==='htm') {
-    pb.innerHTML=`<iframe src="${esc(url)}" title="${esc(name)}"></iframe>`;
+async function prevAttach(id, nameHint) {
+  // Always try to get real filename from metadata first
+  const meta = await fetchMeta(id);
+  const name = (meta && meta.fileName) ? meta.fileName : (nameHint || `fichier-${id}`);
+  const url = attachUrl(id);
+
+  // Warn in console if docId is still missing
+  if (!gristDocId) {
+    console.warn('[SecondBrain] gristDocId not resolved — attachment URLs will not work. referrer:', document.referrer);
+  }
+
+  const ext = (name.split('.').pop() || '').toLowerCase();
+  document.getElementById('prevName').textContent = name;
+  document.getElementById('prevDl').href = url;
+  const imgs = ['jpg','jpeg','png','gif','webp','svg','bmp','ico'];
+  const pb = document.getElementById('prevBody');
+
+  if (imgs.includes(ext)) {
+    pb.innerHTML = `<img src="${esc(url)}" alt="${esc(name)}">`;
+  } else if (['pdf','txt','csv','md','html','htm'].includes(ext)) {
+    pb.innerHTML = `<iframe src="${esc(url)}" title="${esc(name)}"></iframe>`;
   } else {
-    pb.innerHTML=`<div class="prev-unsup">
+    pb.innerHTML = `<div class="prev-unsup">
       <svg width="52" height="52" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
       <div style="font-size:15px;font-weight:500;color:rgba(255,255,255,.85);margin-bottom:6px">${esc(name)}</div>
-      <div>Aperçu non disponible pour les fichiers .${ext||'?'}</div>
+      <div style="margin-bottom:4px">Aperçu non disponible pour ce type de fichier (.${esc(ext||'?')})</div>
       <a href="${esc(url)}" target="_blank" class="prev-dl" style="margin-top:16px">
         <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
         Télécharger le fichier
